@@ -7,6 +7,7 @@
 ``` sh
 $ cd /home/pi/.dingdang
 $ git clone http://github.com/wzpan/dingdang-contrib contrib
+$ pip install -r contrib/requirements.txt
 ```
 
 ## 升级
@@ -18,8 +19,14 @@ $ git pull origin master
 
 ## 如何贡献
 
+### 流程说明
+
 1. fork 本项目；
 2. 添加你的插件；
 3. 在本项目 [Wiki页](https://github.com/wzpan/dingdang-contrib/wiki/neteasemusic) 中添加一项，说明该插件的用途、指令和配置信息（如果有的话）。
-4. 发起 pull request 。
+4. 如果你的插件有依赖第三方库，将依赖项添加进 requirements.txt 。
+5. 发起 pull request 。
 
+### 插件规范
+
+* 每个插件只能包含一个 .py 文件。依赖的其他库文件不得放进本仓库中，否则会被当成插件而解析出错。如果确实需要分成多个文件，可以将其他文件打包发布到 PyPi ，然后将依赖加进 requirements.txt 中。
