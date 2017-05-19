@@ -15,7 +15,7 @@ sys.setdefaultencoding('utf8')
 # Standard module stuff
 WORDS = ["YINYUE"]
 
-def handle(text, mic, profile):
+def handle(text, mic, profile, wxbot=None):
     """
     Responds to user-input, typically speech text, by telling a joke.
 
@@ -29,11 +29,6 @@ def handle(text, mic, profile):
 
     kwargs = {}
     kwargs['mic'] = mic
-    if 'netease_music' in profile:
-        if 'account' in profile['netease_music']:
-            kwargs['account'] = profile['netease_music']['account']
-        if 'password' in profile['netease_music']:
-            kwargs['password'] = profile['netease_music']['password']
 
     logger.debug("Preparing to start netease music module")
     try:
@@ -43,7 +38,6 @@ def handle(text, mic, profile):
         mic.say(u"访问网易云音乐失败了，请稍后再试")
         return    
 
-    # FIXME: Make this configurable
     persona = 'DINGDANG'
     if 'robot_name' in profile:
         persona = profile['robot_name']
@@ -51,7 +45,33 @@ def handle(text, mic, profile):
     logger.debug("Starting music mode")
     music_mode = MusicMode(persona, mic, netease_wrapper)
     music_mode.stop = False
-    
+
+    # 登录网易云音乐
+    account = ''
+    password = ''
+    if 'netease_music' in profile:
+        if 'account' in profile['netease_music']:
+            account = profile['netease_music']['account']
+        if 'password' in profile['netease_music']:
+            password = profile['netease_music']['password']
+    if account == '' or password == '':
+        mic.say("请先配置好账户信息再找我播放音乐")
+        return
+
+    has_login = False
+    if not (os.path.exists('userInfo')):
+        mic.say("稍等，正在为您登录网易云音乐")
+        res = music_mode.login(account, password)
+        if res:
+            mic.say("登录成功")
+            has_login = True
+    else:
+        has_login = True                
+
+    if not has_login:
+        mic.say("登录失败, 退出播放. 请检查配置, 稍后再试")
+        return
+        
     if any(word in text for word in [u"歌单", u"我的"]):
         music_mode.handleForever(1) # 1: 用户歌单
     else:
@@ -100,9 +120,6 @@ class MusicMode(object):
             self.mic.say(u"停止播放")
             self.music.stop()
             return
-        elif any(ext in command for ext in [u"播放", u"继续"]):
-            self.music.play()
-            return
         elif u"暂停" in command:
             self.mic.say(u"暂停播放")
             self.music.pause()
@@ -117,7 +134,7 @@ class MusicMode(object):
             self.music.decrease_volume()
             self.music.play(False)
             return
-        elif any(ext in command for ext in [u'下一首', u"下首歌", u"切歌", u"下一首歌", u"一首歌", u"换首歌", u"切割", u"哥", u"那首歌"]):
+        elif any(ext in command for ext in [u'下一首', u"下首歌", u"切歌", u"下一首歌", u"换首歌", u"切割", u"那首歌"]):
             self.mic.say(u"下一首歌")
             self.music.next()
             self.music.play()
@@ -142,6 +159,9 @@ class MusicMode(object):
             self.music.stop()
             self.music.exit()
             return
+        elif any(ext in command for ext in [u"播放", u"继续"]):
+            self.music.play()
+            return
         else:
             time.sleep(.5)
             self.mic.say(u"没有听懂呢。要退出播放，请说退出播放")
@@ -156,7 +176,7 @@ class MusicMode(object):
         play_type - 0：播放推荐榜单；1：播放用户歌单
         """
 
-        self.music.update_playlist_by_type(play_type)        
+        self.music.update_playlist_by_type(play_type)
         self.music.start() 
 
         while True:
@@ -193,12 +213,10 @@ class MusicMode(object):
 
 class NetEaseWrapper(threading.Thread):
 
-    def __init__(self, mic, account='', password=''):
+    def __init__(self, mic):
         super(NetEaseWrapper, self).__init__()
         self.cond = threading.Condition() 
         self.netease = NetEaseApi.NetEase()
-        self.account = account
-        self.password = password
         self.mic = mic
         self.userId = 33120312
         self.volume = 0.5
@@ -216,15 +234,6 @@ class NetEaseWrapper(threading.Thread):
         if play_type == 0:
             self.playlist = self.get_top_songlist()
         elif play_type == 1:
-            has_login = False
-            if not (os.path.exists('userInfo')):
-                self.mic.say("稍等，正在为您登录网易云音乐")
-                res = self.login(self.account, self.password)
-                if res:
-                    self.mic.say("登录成功")
-                    has_login = True
-            else:
-                has_login = True                
             if has_login:
                 user_playlist = self.get_user_playlist()
                 if user_playlist > 0:
@@ -248,6 +257,7 @@ class NetEaseWrapper(threading.Thread):
         playlist = []
         for data in datalist:
             music_info = {}
+            music_info.setdefault("song_id", data.get("song_id"))
             music_info.setdefault("song_name", data.get("song_name"))
             music_info.setdefault("artist", data.get("artist"))
             music_info.setdefault("album_name", data.get("album_name"))
@@ -310,7 +320,6 @@ class NetEaseWrapper(threading.Thread):
     def play(self, report=True):
         self.pause = False
         if self.idx < len(self.playlist):
-            # 循环播放，取出第一首歌曲，放在最后的位置，类似一个循环队列
             if self.idx == -1:
                 self.idx = 0
             if not self.random:
@@ -318,13 +327,14 @@ class NetEaseWrapper(threading.Thread):
             else:
                 song = random.choice(self.playlist)
             self.song = song
-            mp3_url = song["mp3_url"]
+            subprocess.Popen("pkill play", shell=True)            
+            mp3_url = self.netease.songs_detail_new_api([song['song_id']])[0]['url']
+            if mp3_url is None:
+                self.next()
+                self.cond.wait()
             try:
-                subprocess.Popen("pkill play", shell=True)
                 if report:
-                    time.sleep(.5)
                     self.mic.say(u"即将播放 %s %s" % (song['artist'], song['song_name']))
-                time.sleep(.5)
                 subprocess.Popen("play -v %f %s"  % (self.volume, mp3_url), shell=True, stdout=subprocess.PIPE)
                 self.cond.notify()
                 self.cond.wait(int(song.get('playTime')) / 1000)
@@ -358,7 +368,7 @@ class NetEaseWrapper(threading.Thread):
 
     def randomize(self):
         self.random = True
-        self.notify()
+        self.next()
 
     def serialize(self):
         self.random = False
