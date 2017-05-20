@@ -2,6 +2,8 @@
 
 [叮当机器人](http://github.com/wzpan/dingdang) 的用户贡献插件。
 
+*[插件列表](https://github.com/wzpan/dingdang-contrib/wiki)
+
 ## 安装
 
 ``` sh

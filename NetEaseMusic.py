@@ -147,6 +147,10 @@ class MusicMode(object):
             self.music.update_playlist_by_type(2, input)
             self.music.play()            
             return
+        elif u'什么歌' in command:
+            self.mic.say(u"正在播放的是%s的%s" % (self.music.song['artist'], self.music.song['song_name']))
+            self.music.play(False)            
+            return
         elif u'随机' in command:
             self.mic.say(u"随机播放")
             self.music.randomize()
@@ -196,7 +200,7 @@ class MusicMode(object):
             input = self.mic.activeListen(MUSIC=True)
 
             if input:
-                if any(ext in input for ext in [u"结束", u"退出"，u"停止"]):
+                if any(ext in input for ext in [u"结束", u"退出", u"停止"]):
                     time.sleep(.5)
                     self.mic.say(u"结束播放")
                     self.music.stop()                    
@@ -315,7 +319,8 @@ class NetEaseWrapper(threading.Thread):
                 self.next()
             
     def play(self, report=True):
-        self.pause = False        
+        if self.pause:
+            self.pause = False        
         if self.idx < len(self.playlist):
             if self.idx == -1:
                 self.idx = 0
@@ -333,7 +338,7 @@ class NetEaseWrapper(threading.Thread):
                 if report:
                     self.mic.say(u"即将播放 %s %s" % (song['artist'], song['song_name']))
                 subprocess.Popen("play -v %f %s"  % (self.volume, mp3_url), shell=True, stdout=subprocess.PIPE)
-                self.cond.notify()
+                self.cond.notify()                
                 self.cond.wait(int(song.get('playTime')) / 1000)
             except:
                 pass
@@ -348,7 +353,7 @@ class NetEaseWrapper(threading.Thread):
     def notify(self):
         if self.cond.acquire():
             self.cond.notifyAll()
-            self.cond.release()
+            self.cond.release()            
 
 
     def previous(self):
@@ -375,16 +380,19 @@ class NetEaseWrapper(threading.Thread):
         self.volume += .1
         if self.volume > 1:
             self.volume = 1
+        self.notify()
         
     def decrease_volume(self):
         self.volume -= .1
         if self.volume < 0:
             self.volume = 0
+        self.notify()
 
     def stop(self):
         try:
             subprocess.Popen("pkill play", shell=True)
-            self.cond.notify()
+            self.cond.notifyAll()
+            self.cond.release()
             self.cond.wait()
         except:
             pass
