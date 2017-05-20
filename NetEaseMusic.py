@@ -116,10 +116,6 @@ class MusicMode(object):
             self.music.update_playlist_by_type(1)
             self.music.play()
             return
-        elif any(ext in command for ext in [u"停止", u"结束"]):
-            self.mic.say(u"停止播放")
-            self.music.stop()
-            return
         elif u"暂停" in command:
             self.mic.say(u"暂停播放")
             self.music.pause()
@@ -144,6 +140,13 @@ class MusicMode(object):
             self.music.previous()            
             self.music.play()
             return
+        elif any(ext in command for ext in [u'搜索', u'查找']):
+            self.mic.say(u"请在滴一声后告诉我您要搜索的关键词")
+            input = self.mic.activeListen(MUSIC=True)
+            self.mic.say(u'正在为您搜索%s' % input)
+            self.music.update_playlist_by_type(2, input)
+            self.music.play()            
+            return
         elif u'随机' in command:
             self.mic.say(u"随机播放")
             self.music.randomize()
@@ -154,16 +157,11 @@ class MusicMode(object):
             self.music.serialize()
             self.music.play()
             return
-        elif u'退出' in command:
-            self.mic.say(u"退出播放")
-            self.music.stop()
-            self.music.exit()
-            return
         elif any(ext in command for ext in [u"播放", u"继续"]):
             self.music.play()
             return
         else:
-            time.sleep(.5)
+            #time.sleep(.5)
             self.mic.say(u"没有听懂呢。要退出播放，请说退出播放")
             self.music.play(False)
             return
@@ -192,13 +190,13 @@ class MusicMode(object):
 
             # 当听到呼叫机器人名字时，停止播放
             self.music.stop()
-            time.sleep(.5)
+            time.sleep(.3)
 
             # 听用户说话
             input = self.mic.activeListen(MUSIC=True)
 
             if input:
-                if any(ext in input for ext in ["结束", "退出"]):
+                if any(ext in input for ext in [u"结束", u"退出"，u"停止"]):
                     time.sleep(.5)
                     self.mic.say(u"结束播放")
                     self.music.stop()                    
@@ -230,24 +228,24 @@ class NetEaseWrapper(threading.Thread):
         self.cond = cond
 
         
-    def update_playlist_by_type(self, play_type):
+    def update_playlist_by_type(self, play_type, keyword=''):
         if play_type == 0:
+            # 播放热门榜单音乐
             self.playlist = self.get_top_songlist()
         elif play_type == 1:
-            if has_login:
-                user_playlist = self.get_user_playlist()
-                if user_playlist > 0:
-                    self.playlist = self.get_song_list_by_playlist_id(user_playlist[0]['id'])
-                    if len(self.playlist) == 0:
-                        self.mic.say("用户歌单没有歌曲，改为播放推荐榜单")
-                        self.playlist = self.get_top_songlist()
-                else:
-                    self.mic.say("当前用户没有歌单，改为播放推荐榜单")
+            # 播放用户歌单
+            user_playlist = self.get_user_playlist()
+            if user_playlist > 0:
+                self.playlist = self.get_song_list_by_playlist_id(user_playlist[0]['id'])
+                if len(self.playlist) == 0:
+                    self.mic.say("用户歌单没有歌曲，改为播放推荐榜单")
                     self.playlist = self.get_top_songlist()
             else:
-                self.mic.say("登录失败，改为播放推荐榜单")
+                self.mic.say("当前用户没有歌单，改为播放推荐榜单")
                 self.playlist = self.get_top_songlist()
-
+        elif play_type == 2:
+            # 搜索歌曲
+            self.playlist = self.search_by_name(keyword)
 
 
 
@@ -304,7 +302,6 @@ class NetEaseWrapper(threading.Thread):
         song_list = self.netease.dig_info(songs, 'songs')
         return song_list
 
-    
     def current_song(self):
         if self.song != None:
             return self.song['song_name']
@@ -318,7 +315,7 @@ class NetEaseWrapper(threading.Thread):
                 self.next()
             
     def play(self, report=True):
-        self.pause = False
+        self.pause = False        
         if self.idx < len(self.playlist):
             if self.idx == -1:
                 self.idx = 0
