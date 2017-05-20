@@ -17,7 +17,8 @@ $ sudo apt-get install sox  # 用于播放音乐
 
 ``` sh
 $ cd /home/pi/.dingdang/contrib
-$ git pull origin master
+$ git pull
+$ pip install --upgrade -r contrib/requirements.txt
 ```
 
 ## 如何贡献

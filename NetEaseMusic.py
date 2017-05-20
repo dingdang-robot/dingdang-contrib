@@ -102,6 +102,9 @@ class MusicMode(object):
         self.mic = mic
         self.stop = False
 
+    def login(self, account, password):
+        return self.music.login(account, password)
+
     def delegateInput(self, input):
         
         command = input.upper()
