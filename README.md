@@ -7,18 +7,19 @@
 ## 安装
 
 ``` sh
-$ cd /home/pi/.dingdang
-$ git clone http://github.com/wzpan/dingdang-contrib contrib
-$ pip install -r contrib/requirements.txt
-$ sudo apt-get install sox  # 用于播放音乐
+cd /home/pi/.dingdang
+git clone http://github.com/wzpan/dingdang-contrib contrib
+pip install -r contrib/requirements.txt
+sudo apt-get install sox  # 用于播放音乐
+sudo apt-get install libsox-fmt-mp3 # 添加 sox 的 mp3 格式支持
 ```
 
 ## 升级
 
 ``` sh
-$ cd /home/pi/.dingdang/contrib
-$ git pull
-$ pip install --upgrade -r contrib/requirements.txt
+cd /home/pi/.dingdang/contrib
+git pull
+pip install --upgrade -r contrib/requirements.txt
 ```
 
 ## 如何贡献
