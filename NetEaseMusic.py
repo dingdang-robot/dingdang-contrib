@@ -1,4 +1,5 @@
 # -*- coding: utf-8-*-
+# 网易云音乐播放插件
 import logging
 import threading
 import hashlib
@@ -17,13 +18,14 @@ WORDS = ["YINYUE"]
 
 def handle(text, mic, profile, wxbot=None):
     """
-    Responds to user-input, typically speech text, by telling a joke.
+    Responds to user-input, typically speech text
 
     Arguments:
         text -- user-input, typically transcribed speech
         mic -- used to interact with the user (for both input and output)
         profile -- contains information related to the user (e.g., phone
                    number)
+        wxbot -- wechat bot instance
     """
     logger = logging.getLogger(__name__)
 
@@ -84,7 +86,7 @@ def handle(text, mic, profile, wxbot=None):
 
 def isValid(text):
     """
-        Returns True if the input is related to jokes/humor.
+        Returns True if the input is related to music.
 
         Arguments:
         text -- user-input, typically transcribed speech
@@ -332,8 +334,10 @@ class NetEaseWrapper(threading.Thread):
             else:
                 song = random.choice(self.playlist)
             self.song = song
-            subprocess.Popen("pkill play", shell=True)            
-            mp3_url = self.netease.songs_detail_new_api([song['song_id']])[0]['url']
+            subprocess.Popen("pkill play", shell=True)
+            if report:
+                song['mp3_url'] = self.netease.songs_detail_new_api([song['song_id']])[0]['url']
+            mp3_url = song['mp3_url']
             if mp3_url is None:
                 self.next()
                 self.cond.wait()
