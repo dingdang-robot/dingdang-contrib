@@ -2,13 +2,13 @@
 
 [叮当机器人](http://github.com/wzpan/dingdang) 的用户贡献插件。
 
-* [插件列表](https://github.com/wzpan/dingdang-contrib/wiki)
+* [插件列表](https://github.com/dingdang-robot/dingdang-contrib/wiki)
 
 ## 安装
 
 ``` sh
 cd /home/pi/.dingdang
-git clone http://github.com/wzpan/dingdang-contrib contrib
+git clone http://github.com/dingdang-robot/dingdang-contrib contrib
 pip install -r contrib/requirements.txt
 sudo apt-get install sox  # 用于播放音乐
 sudo apt-get install libsox-fmt-mp3 # 添加 sox 的 mp3 格式支持
@@ -28,7 +28,7 @@ pip install --upgrade -r contrib/requirements.txt
 
 1. fork 本项目；
 2. 添加你的插件；
-3. 在本项目 [Wiki页](https://github.com/wzpan/dingdang-contrib/wiki/neteasemusic) 中添加一项，说明该插件的用途、指令和配置信息（如果有的话）。
+3. 在本项目 [Wiki页](https://github.com/dingdang-robot/dingdang-contrib/wiki/neteasemusic) 中添加一项，说明该插件的用途、指令和配置信息（如果有的话）。
 4. 如果你的插件有依赖第三方库，将依赖项添加进 requirements.txt 。如果依赖第三方工具, 则在 README 中的[安装](#安装) 一节中补充。
 5. 发起 pull request 。
 
