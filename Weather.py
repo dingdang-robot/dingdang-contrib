@@ -11,37 +11,14 @@ sys.setdefaultencoding('utf8')
 # Standard module stuff
 WORDS = ["TIANQI"]
 
-def get_air_quality(PM25_API, pm25_key, location, logger):
-    """ get air quality of current day """
-    try:
-        pm25_result = requests.get(PM25_API, params={
-            'token': pm25_key,
-            'city': location,
-            'stations': 'no'
-        }, timeout=3)
-        pm25_res = json.loads(pm25_result.text, encoding='utf-8')
-        logger.debug("PM2.5 report:", pm25_res)
-        if len(pm25_res) > 0:
-            return pm25_res[0]['quality']
-        else:
-            return ''
-    except Exception, e:
-        logger.error(e)
-        return ''
-    
-    
-def analyze_today(weather_code, quality):
+def analyze_today(weather_code, suggestion):
     """ analyze today's weather """
     weather_code = int(weather_code)
     if weather_code <= 8:
-        if quality in (u'良', u'优'):
+        if u'适宜' in suggestion:
             return u'今天天气不错，空气清新，适合出门运动哦'
-        elif u'中' in quality:
-            return u'空气质量不佳，不建议出外运动了哦'
-        elif quality == "":
-            return u'今天天气还不错呢'
         else:
-            return u'空气质量太差，出门建议带口罩哦'
+            return u'空气质量比较一般，建议减少出行'
     elif weather_code in range(10, 16):
         return u'主人，出门记得带伞哦'
     elif weather_code in range(16, 19) or \
@@ -55,6 +32,14 @@ def analyze_today(weather_code, quality):
     else:
         return u''
 
+
+def fetch_weather(api, key, location):
+    result = requests.get(api, params={
+        'key': key,
+        'location': location
+    }, timeout=3)
+    res = json.loads(result.text, encoding='utf-8')
+    return res
 
 
 def handle(text, mic, profile, wxbot=None):
@@ -71,25 +56,19 @@ def handle(text, mic, profile, wxbot=None):
     logger = logging.getLogger(__name__)
     # get config
     if 'weather' not in profile or \
-       not profile['weather'].has_key('seniverse_key') or \
-       not profile['weather'].has_key('pm25_key') or \
+       not profile['weather'].has_key('key') or \
        not profile['weather'].has_key('location'):
         mic.say('天气插件配置有误，插件使用失败')
         return
-    weather_key = profile['weather']['seniverse_key']
-    pm25_key = profile['weather']['pm25_key']
+    key = profile['weather']['key']
     location = profile['weather']['location']
-    WEATHER_API = 'https://api.seniverse.com/v3/weather/daily.json'
-    PM25_API = 'http://www.pm25.in/api/querys/pm2_5.json'
+    WEATHER_API = 'https://api.seniverse.com/v3/weather/daily.json'        
+    SUGGESTION_API = 'https://api.seniverse.com/v3/life/suggestion.json'
     try:
-        weather_result = requests.get(WEATHER_API, params={
-            'key': weather_key,
-            'location': location
-        }, timeout=3)
-        weather_res = json.loads(weather_result.text, encoding='utf-8')
-        logger.debug("Weather report: ", weather_res)
-        if weather_res.has_key('results'):
-            daily = weather_res['results'][0]['daily']
+        weather = fetch_weather(WEATHER_API, key, location)
+        logger.debug("Weather report: ", weather)
+        if weather.has_key('results'):
+            daily = weather['results'][0]['daily']
             days = set([])
             day_text = [u'今天', u'明天', u'后天']
             for word in day_text:
@@ -100,12 +79,12 @@ def handle(text, mic, profile, wxbot=None):
             responds = u'%s天气：' % location
             analyze_res = ''
             for day in days:
-                responds += u'%s：%s，最高气温%s摄氏度，最低气温%s摄氏度；' % (day_text[day], daily[day]['text_day'], daily[day]['high'], daily[day]['low'])
+                responds += u'%s：%s，%s到%s摄氏度。' % (day_text[day], daily[day]['text_day'], daily[day]['low'], daily[day]['high'])
                 if day == 0:
-                    quality = get_air_quality(PM25_API, pm25_key, location, logger)
-                    if quality != '':
-                        responds += u'空气质量：%s' % quality
-                    analyze_res = analyze_today(daily[day]['code_day'], quality)
+                    suggestion = fetch_weather(SUGGESTION_API, key, location)
+                    if suggestion.has_key('results'):
+                        suggestion_text = suggestion['results'][0]['suggestion']['sport']['brief']
+                        analyze_res = analyze_today(daily[day]['code_day'], suggestion_text)
             responds += analyze_res
             mic.say(responds)
         else:
@@ -115,7 +94,6 @@ def handle(text, mic, profile, wxbot=None):
         mic.say('抱歉，我获取不到天气数据，请稍后再试')
         
     
-
 def isValid(text):
     """
         Returns True if the input is related to weather.
@@ -123,4 +101,4 @@ def isValid(text):
         Arguments:
         text -- user-input, typically transcribed speech
     """
-    return any(word in text for word in [u"天气", u"气温", u"空气质量"])
+    return any(word in text for word in [u"天气", u"气温"])
