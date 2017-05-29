@@ -1,5 +1,8 @@
 # dingdang-contrib
 
+> 注意：pull-request 请提到 [dingdang-robot/dingdang-contrib](https://github.com/dingdang-robot/dingdang-contrib)。本仓库不接受任何 pull request。
+
+
 [叮当机器人](http://github.com/wzpan/dingdang) 的用户贡献插件。
 
 * [插件列表](https://github.com/dingdang-robot/dingdang-contrib/wiki)
