@@ -170,7 +170,6 @@ class MusicMode(object):
             self.music.play()
             return
         else:
-            #time.sleep(.5)
             self.mic.say(u"没有听懂呢。要退出播放，请说退出播放")
             self.music.play(False)
             return
@@ -199,14 +198,13 @@ class MusicMode(object):
 
             # 当听到呼叫机器人名字时，停止播放
             self.music.stop()
-            time.sleep(.3)
+            time.sleep(.1)
 
             # 听用户说话
             input = self.mic.activeListen(MUSIC=True)
 
             if input:
                 if any(ext in input for ext in [u"结束", u"退出", u"停止"]):
-                    time.sleep(.5)
                     self.mic.say(u"结束播放")
                     self.music.stop()                    
                     self.music.exit()
@@ -226,7 +224,7 @@ class NetEaseWrapper(threading.Thread):
         self.netease = NetEaseApi.NetEase()
         self.mic = mic
         self.userId = 33120312
-        self.volume = 0.5
+        self.volume = 0.7
         self.song = None  # 正在播放的曲目信息
         self.idx = -1  # 正在播放的曲目序号
         self.random = False
@@ -319,7 +317,7 @@ class NetEaseWrapper(threading.Thread):
 
     def run(self):
         while True:
-            if self.cond.acquire():            
+            if self.cond.acquire():
                 self.play()
                 self.next()
             
