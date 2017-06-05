@@ -1,4 +1,5 @@
 # -*- coding: utf-8-*-
+# 网易云音乐播放插件
 import logging
 import threading
 import hashlib
@@ -17,13 +18,14 @@ WORDS = ["YINYUE"]
 
 def handle(text, mic, profile, wxbot=None):
     """
-    Responds to user-input, typically speech text, by telling a joke.
+    Responds to user-input, typically speech text
 
     Arguments:
         text -- user-input, typically transcribed speech
         mic -- used to interact with the user (for both input and output)
         profile -- contains information related to the user (e.g., phone
                    number)
+        wxbot -- wechat bot instance
     """
     logger = logging.getLogger(__name__)
 
@@ -84,7 +86,7 @@ def handle(text, mic, profile, wxbot=None):
 
 def isValid(text):
     """
-        Returns True if the input is related to jokes/humor.
+        Returns True if the input is related to music.
 
         Arguments:
         text -- user-input, typically transcribed speech
@@ -168,7 +170,6 @@ class MusicMode(object):
             self.music.play()
             return
         else:
-            #time.sleep(.5)
             self.mic.say(u"没有听懂呢。要退出播放，请说退出播放")
             self.music.play(False)
             return
@@ -197,14 +198,13 @@ class MusicMode(object):
 
             # 当听到呼叫机器人名字时，停止播放
             self.music.stop()
-            time.sleep(.3)
+            time.sleep(.1)
 
             # 听用户说话
             input = self.mic.activeListen(MUSIC=True)
 
             if input:
                 if any(ext in input for ext in [u"结束", u"退出", u"停止"]):
-                    time.sleep(.5)
                     self.mic.say(u"结束播放")
                     self.music.stop()                    
                     self.music.exit()
@@ -224,7 +224,7 @@ class NetEaseWrapper(threading.Thread):
         self.netease = NetEaseApi.NetEase()
         self.mic = mic
         self.userId = 33120312
-        self.volume = 0.5
+        self.volume = 0.7
         self.song = None  # 正在播放的曲目信息
         self.idx = -1  # 正在播放的曲目序号
         self.random = False
@@ -317,7 +317,7 @@ class NetEaseWrapper(threading.Thread):
 
     def run(self):
         while True:
-            if self.cond.acquire():            
+            if self.cond.acquire():
                 self.play()
                 self.next()
             
@@ -332,8 +332,10 @@ class NetEaseWrapper(threading.Thread):
             else:
                 song = random.choice(self.playlist)
             self.song = song
-            subprocess.Popen("pkill play", shell=True)            
-            mp3_url = self.netease.songs_detail_new_api([song['song_id']])[0]['url']
+            subprocess.Popen("pkill play", shell=True)
+            if report:
+                song['mp3_url'] = self.netease.songs_detail_new_api([song['song_id']])[0]['url']
+            mp3_url = song['mp3_url']
             if mp3_url is None:
                 self.next()
                 self.cond.wait()
