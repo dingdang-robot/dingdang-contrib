@@ -28,9 +28,9 @@ pip install --upgrade -r contrib/requirements.txt
 
 1. fork 本项目；
 2. 添加你的插件；
-3. 在本项目 [Wiki页](https://github.com/dingdang-robot/dingdang-contrib/wiki/neteasemusic) 中添加一项，说明该插件的用途、指令和配置信息（如果有的话）。
-4. 如果你的插件有依赖第三方库，将依赖项添加进 requirements.txt 。如果依赖第三方工具, 则在 README 中的[安装](#安装) 一节中补充。
-5. 发起 pull request 。
+3. 如果你的插件有依赖第三方库，将依赖项添加进 requirements.txt 。如果依赖第三方工具, 则在 README 中的[安装](#安装) 一节中补充。
+4. 发起 pull request ，说明该插件的用途、指令和配置信息（如果有的话）。
+5. pull request 被 accept 后，在本项目 [Wiki页](https://github.com/dingdang-robot/dingdang-contrib/wiki/neteasemusic) 中添加一项，将该插件的用途、指令和配置信息也添加到此页面中。
 
 ### 插件规范
 
