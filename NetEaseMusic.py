@@ -8,6 +8,7 @@ import subprocess
 import sys
 import os
 import random
+from client.mic import Mic
 from MusicBoxApi import api as NetEaseApi
 
 reload(sys)
@@ -31,7 +32,7 @@ def handle(text, mic, profile, wxbot=None):
 
     kwargs = {}
     kwargs['mic'] = mic
-
+    
     logger.debug("Preparing to start netease music module")
     try:
         netease_wrapper = NetEaseWrapper(**kwargs)
@@ -44,8 +45,13 @@ def handle(text, mic, profile, wxbot=None):
     if 'robot_name' in profile:
         persona = profile['robot_name']
 
+    robot_name_cn = u'叮当'
+    if 'robot_name_cn' in profile:
+        robot_name_cn = profile['robot_name_cn']
+
     logger.debug("Starting music mode")
-    music_mode = MusicMode(persona, mic, netease_wrapper)
+
+    music_mode = MusicMode(persona, robot_name_cn, mic, netease_wrapper)
     music_mode.stop = False
 
     # 登录网易云音乐
@@ -73,6 +79,9 @@ def handle(text, mic, profile, wxbot=None):
     if not has_login:
         mic.say("登录失败, 退出播放. 请检查配置, 稍后再试")
         return
+    
+    if wxbot is not None:
+        wxbot.music_mode = music_mode
         
     if any(word in text for word in [u"歌单", u"我的"]):
         music_mode.handleForever(1) # 1: 用户歌单
@@ -80,7 +89,8 @@ def handle(text, mic, profile, wxbot=None):
         # 默认播放推荐歌曲
         music_mode.handleForever(0) # 0: 推荐榜单
     logger.debug("Exiting music mode")
-
+    if wxbot is not None:
+        wxbot.music_mode = None
     return
 
 
@@ -97,12 +107,12 @@ def isValid(text):
 # The interesting part
 class MusicMode(object):
 
-    def __init__(self, PERSONA, mic, netease_wrapper):
+    def __init__(self, PERSONA, robot_name_cn, mic, netease_wrapper):
         self._logger = logging.getLogger(__name__)
         self.persona = PERSONA
+        self.robot_name_cn = robot_name_cn
         self.music = netease_wrapper
         self.mic = mic
-        self.stop = False
 
     def login(self, account, password):
         return self.music.login(account, password)
@@ -110,6 +120,8 @@ class MusicMode(object):
     def delegateInput(self, input):
         
         command = input.upper()
+        if command.startswith(self.robot_name_cn+": "):
+            return
 
         # check if input is meant to start the music module
         if u"榜单" in command:
@@ -124,6 +136,11 @@ class MusicMode(object):
         elif u"暂停" in command:
             self.mic.say(u"暂停播放")
             self.music.pause()
+            return
+        elif any(ext in command for ext in [u"结束", u"退出", u"停止"]):
+            self.mic.say(u"结束播放")
+            self.music.stop()
+            self.music.exit()
             return
         elif any(ext in command for ext in [u"大声", u"大声点", u"大点声"]):
             self.mic.say(u"大点声")
@@ -150,7 +167,7 @@ class MusicMode(object):
             input = self.mic.activeListen(MUSIC=True)
             self.mic.say(u'正在为您搜索%s' % input)
             self.music.update_playlist_by_type(2, input)
-            self.music.play()            
+            self.music.play()
             return
         elif u'什么歌' in command:
             self.mic.say(u"正在播放的是%s的%s" % (self.music.song['artist'], self.music.song['song_name']))
@@ -167,7 +184,8 @@ class MusicMode(object):
             self.music.play()
             return
         elif any(ext in command for ext in [u"播放", u"继续"]):
-            self.music.play()
+            if not u'即将播放' in command:
+                self.music.play()
             return
         else:
             self.mic.say(u"没有听懂呢。要退出播放，请说退出播放")
@@ -183,14 +201,15 @@ class MusicMode(object):
         """
 
         self.music.update_playlist_by_type(play_type)
-        self.music.start() 
-
+        self.music.start()
+        self.mic.stopPassiveListen()
         while True:
 
-            if self.stop:
+            if self.music.is_stop:
                 return
 
             threshold, transcribed = self.mic.passiveListen(self.persona)
+            self.mic.continuePassive()            
             
             if not transcribed or not threshold:
                 self._logger.info("Nothing has been said or transcribed.")
@@ -206,7 +225,7 @@ class MusicMode(object):
             if input:
                 if any(ext in input for ext in [u"结束", u"退出", u"停止"]):
                     self.mic.say(u"结束播放")
-                    self.music.stop()                    
+                    self.music.stop()
                     self.music.exit()
                     return
                 self.delegateInput(input)
@@ -229,6 +248,8 @@ class NetEaseWrapper(threading.Thread):
         self.idx = -1  # 正在播放的曲目序号
         self.random = False
         self.playlist = []
+        self.is_pause = False
+        self.is_stop = False
 
         
     def set_cond(self, cond):
@@ -322,8 +343,8 @@ class NetEaseWrapper(threading.Thread):
                 self.next()
             
     def play(self, report=True):
-        if self.pause:
-            self.pause = False        
+        if self.is_pause:
+            self.is_pause = False        
         if self.idx < len(self.playlist):
             if self.idx == -1:
                 self.idx = 0
@@ -395,6 +416,7 @@ class NetEaseWrapper(threading.Thread):
 
     def stop(self):
         try:
+            self.is_pause = True
             subprocess.Popen("pkill play", shell=True)
             self.cond.notifyAll()
             self.cond.release()
@@ -403,13 +425,13 @@ class NetEaseWrapper(threading.Thread):
             pass
 
     def pause(self):
-        self.pause = True
+        self.is_pause = True
         # 暂不支持断点续播，因此暂停和停止相同处理
         self.stop()
 
 
     def exit(self):
-        self.stop = True
+        self.is_stop = True
         self.playlist = []
         self.notify()
 
