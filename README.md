@@ -24,6 +24,10 @@ pip install --upgrade -r contrib/requirements.txt
 
 ## 如何贡献
 
+### 教程
+
+[手把手教你编写叮当机器人插件](http://www.hahack.com/codes/how-to-write-dingdang-plugin/)
+
 ### 流程说明
 
 1. fork 本项目；
