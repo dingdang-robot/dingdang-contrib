@@ -232,7 +232,7 @@ class MusicMode(object):
             try:
                 threshold, transcribed = self.mic.passiveListen(self.persona)
             except Exception, e:
-                self._logger.error(e)
+                self._logger.debug(e)
                 thredshold, transcribed = (None, None)
             
             if not transcribed or not threshold:
