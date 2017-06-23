@@ -113,6 +113,7 @@ class MusicMode(object):
         self.mic = mic
         self.wxbot = wxbot
         self.search_mode = False
+        self.msg_thread = threading.Thread(target=self.wxbot.proc_msg)        
 
     def login(self, account, password):
         return self.music.login(account, password)
@@ -151,12 +152,12 @@ class MusicMode(object):
         elif any(ext in command for ext in [u"大声", u"大声点", u"大点声"]):
             self.mic.say(u"大点声")
             self.music.increase_volume()
-            self.music.play(False)
+            #self.music.play(False)
             return
         elif any(ext in command for ext in [u"小声", u"小点声", u"小声点"]):
             self.mic.say(u"小点声")
             self.music.decrease_volume()
-            self.music.play(False)
+            #self.music.play(False)
             return
         elif any(ext in command for ext in [u'下一首', u"下首歌", u"切歌", u"下一首歌", u"换首歌", u"切割", u"那首歌"]):
             self.mic.say(u"下一首歌")
@@ -192,7 +193,7 @@ class MusicMode(object):
         elif u'顺序' in command:
             self.mic.say(u"顺序播放")
             self.music.serialize()
-            self.music.play()
+            #self.music.play()
             return
         elif any(ext in command for ext in [u"播放", u"继续"]):
             if not u'即将播放' in command:
@@ -219,17 +220,16 @@ class MusicMode(object):
 
         self.music.update_playlist_by_type(play_type)
         self.music.start()
+        if self.wxbot is not None:
+            self.msg_thread.start()
         while True:
 
             if self.music.is_stop:
                 self._logger.info('Stop Netease music mode')
                 return
 
-            if self.wxbot is not None and self.wxbot.is_login:
-                self._logger.info('Checking wxbot messages')
-                self.wxbot.check_msg()
-
             try:
+                self._logger.info('离线唤醒监听中')                
                 threshold, transcribed = self.mic.passiveListen(self.persona)
             except Exception, e:
                 self._logger.debug(e)
@@ -255,9 +255,8 @@ class MusicMode(object):
                 self.delegateInput(input)
             else:
                 self.mic.say(u"什么？")
-                if not self.music.pause:
+                if not self.music.is_pause:
                     self.music.play(False)
-
 
 class NetEaseWrapper(threading.Thread):
 
