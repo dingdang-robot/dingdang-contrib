@@ -113,7 +113,8 @@ class MusicMode(object):
         self.mic = mic
         self.wxbot = wxbot
         self.search_mode = False
-        self.msg_thread = threading.Thread(target=self.wxbot.proc_msg)        
+        if self.wxbot is not None:
+            self.msg_thread = threading.Thread(target=self.wxbot.proc_msg)
 
     def login(self, account, password):
         return self.music.login(account, password)
@@ -294,7 +295,7 @@ class NetEaseWrapper(threading.Thread):
             else:
                 self.mic.say("当前用户没有歌单，改为播放推荐榜单")
                 self.playlist = self.get_top_songlist()
-        elif play_type == 2:
+        elif play_type == 2 and keyword != '':
             # 搜索歌曲
             self.playlist = self.search_by_name(keyword)
 
