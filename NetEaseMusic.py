@@ -113,7 +113,8 @@ class MusicMode(object):
         self.mic = mic
         self.wxbot = wxbot
         self.search_mode = False
-        self.msg_thread = threading.Thread(target=self.wxbot.proc_msg)        
+        if self.wxbot is not None:
+            self.msg_thread = threading.Thread(target=self.wxbot.proc_msg)
 
     def login(self, account, password):
         return self.music.login(account, password)
@@ -177,6 +178,10 @@ class MusicMode(object):
             else:
                 self.mic.say(u"请在滴一声后告诉我您要搜索的关键词")
                 input = self.mic.activeListen(MUSIC=True)
+                if input is None or input.strip() == '':
+                    self.mic.say("没有听到关键词呢，请重新叫我查找吧")
+                    self.music.play(False)
+                    return
                 self.mic.say(u'正在为您搜索%s' % input)
                 self.music.update_playlist_by_type(2, input)
                 self.music.play()
@@ -202,6 +207,10 @@ class MusicMode(object):
         elif self.search_mode:
             self.search_mode = False            
             input = command
+            if input is None or input.strip() == '':
+                self.mic.say("没有听到关键词呢，请重新叫我查找吧")
+                self.music.play(False)
+                return
             self.mic.say(u'正在为您搜索%s' % input)
             self.music.update_playlist_by_type(2, input)
             self.music.play()
@@ -227,7 +236,7 @@ class MusicMode(object):
             if self.music.is_stop:
                 self._logger.info('Stop Netease music mode')
                 return
-
+            
             try:
                 self._logger.info('离线唤醒监听中')                
                 threshold, transcribed = self.mic.passiveListen(self.persona)
