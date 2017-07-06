@@ -152,7 +152,7 @@ class MusicMode(object):
             self.to_listen = False
             self.music.play(False)
             return
-        elif any(ext in command for ext in [u"恢复聆听", u"开始聆听", u"开启聆听"]):
+        elif any(ext in command for ext in [u"恢复聆听", u"开始聆听", u"开启聆听", u"听我的"]):
             self.mic.say(u"开启语音交互功能")
             self.to_listen = True
             self.music.play(False)
