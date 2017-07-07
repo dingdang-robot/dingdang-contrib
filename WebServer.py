@@ -10,6 +10,7 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 
 WORDS = ["LIULAN"]
+SLUG = "webserver"
 
 def handle(text, mic, profile, wxbot=None):
     logger = logging.getLogger(__name__)
@@ -21,10 +22,11 @@ def handle(text, mic, profile, wxbot=None):
     wxbot.get_uuid()
     wxbot.gen_qr_code(dest_file)
     webport = "8080"
-    if 'webserver' in profile:
-        if 'webport' in profile['webserver']:
-            webport = profile['webserver']['webport']
-    cmd = 'cd /home/pi/dingdang/temp && python -m SimpleHTTPServer %s' % (webport)
+    if SLUG in profile:
+        if 'webport' in profile[SLUG]:
+            webport = profile[SLUG]['webport']
+    # start server
+    cmd = 'cd %s && python -m SimpleHTTPServer %s' % (mic.dingdangpath.TEMP_PATH, webport)
     try:
         mic.say('正在启动服务器')
         subprocess.Popen(cmd, shell=True)

@@ -15,7 +15,7 @@ sys.setdefaultencoding('utf8')
 
 # Standard module stuff
 WORDS = ["YINYUE"]
-
+SLUG = "netease_music"
 
 def handle(text, mic, profile, wxbot=None):
     """
@@ -57,11 +57,11 @@ def handle(text, mic, profile, wxbot=None):
     # 登录网易云音乐
     account = ''
     password = ''
-    if 'netease_music' in profile:
-        if 'account' in profile['netease_music']:
-            account = profile['netease_music']['account']
-        if 'password' in profile['netease_music']:
-            password = profile['netease_music']['password']
+    if SLUG in profile:
+        if 'account' in profile[SLUG]:
+            account = profile[SLUG]['account']
+        if 'password' in profile[SLUG]:
+            password = profile[SLUG]['password']
     if account == '' or password == '':
         mic.say("请先配置好账户信息再找我播放音乐")
         return

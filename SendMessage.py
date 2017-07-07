@@ -9,6 +9,7 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 
 WORDS = ["FAXIN"]
+SLUG = "send_message"
 
 def handle(text, mic, profile, wxbot=None):
     logger = logging.getLogger(__name__)
@@ -31,9 +32,9 @@ def handle(text, mic, profile, wxbot=None):
         msgbody = m.group(6)
         comfirm_input = u'确认'
         confirm_message_body = True
-        if 'send_message' in profile:
-            if 'confirm_message_body' in profile['send_message']:
-                confirm_message_body = profile['send_message']['confirm_message_body']
+        if SLUG in profile:
+            if 'confirm_message_body' in profile[SLUG]:
+                confirm_message_body = profile[SLUG]['confirm_message_body']
         if confirm_message_body:
             mic.say('将要提交消息，消息内容是：%s，请在滴一声后确认' % (msgbody))
             comfirm_input = mic.activeListen(MUSIC=True)

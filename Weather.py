@@ -10,6 +10,7 @@ sys.setdefaultencoding('utf8')
 
 # Standard module stuff
 WORDS = ["TIANQI"]
+SLUG = "weather"
 
 def analyze_today(weather_code, suggestion):
     """ analyze today's weather """
@@ -55,13 +56,13 @@ def handle(text, mic, profile, wxbot=None):
     """
     logger = logging.getLogger(__name__)
     # get config
-    if 'weather' not in profile or \
-       not profile['weather'].has_key('key') or \
-       not profile['weather'].has_key('location'):
+    if SLUG not in profile or \
+       not profile[SLUG].has_key('key') or \
+       not profile[SLUG].has_key('location'):
         mic.say('天气插件配置有误，插件使用失败')
         return
-    key = profile['weather']['key']
-    location = profile['weather']['location']
+    key = profile[SLUG]['key']
+    location = profile[SLUG]['location']
     WEATHER_API = 'https://api.seniverse.com/v3/weather/daily.json'        
     SUGGESTION_API = 'https://api.seniverse.com/v3/life/suggestion.json'
     try:

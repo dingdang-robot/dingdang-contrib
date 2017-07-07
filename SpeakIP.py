@@ -10,6 +10,7 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 
 WORDS = ["IP"]
+SLUG = "speak_ip"
 
 def getLocalIP():
     ip = None

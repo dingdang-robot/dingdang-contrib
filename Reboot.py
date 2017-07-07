@@ -9,6 +9,7 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 
 WORDS = ["CHONGQI"]
+SLUG = "reboot"
 
 def handle(text, mic, profile, wxbot=None):
     logger = logging.getLogger(__name__)
