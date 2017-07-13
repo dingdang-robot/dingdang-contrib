@@ -117,6 +117,7 @@ class MusicMode(object):
         self.wxbot = wxbot
         self.search_mode = False
         self.to_listen = True
+        self.delegating = False
         if self.wxbot is not None:
             self.msg_thread = threading.Thread(target=self.wxbot.proc_msg)
 
@@ -253,7 +254,7 @@ class MusicMode(object):
                 self._logger.info('Stop Netease music mode')
                 return
 
-            if not self.to_listen:
+            if not self.to_listen or self.delegating:
                 self._logger.info("Listening mode is disabled.")
                 continue
 
@@ -281,7 +282,10 @@ class MusicMode(object):
                     self.music.stop()
                     self.music.exit()
                     return
-                self.delegateInput(input)
+                if not self.delegating:
+                    self.delegating = True
+                    self.delegateInput(input)
+                    self.delegating = False
             else:
                 self.mic.say(u"什么？")
                 if not self.music.is_pause:
