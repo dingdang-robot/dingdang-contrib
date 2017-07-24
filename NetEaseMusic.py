@@ -67,13 +67,16 @@ def handle(text, mic, profile, wxbot=None):
         return
 
     has_login = False
-    if not (os.path.exists('userInfo')):
+    home_dir = os.path.expandvars('$HOME')
+    user_info = os.path.join(home_dir, 'userInfo')
+    if not (os.path.exists(user_info)):
         mic.say("稍等，正在为您登录网易云音乐")
         res = music_mode.login(account, password)
         if res:
             mic.say("登录成功")
             has_login = True
     else:
+        music_mode.read_login_info(user_info)
         has_login = True
 
     if not has_login:
@@ -120,6 +123,9 @@ class MusicMode(object):
         self.delegating = False
         if self.wxbot is not None:
             self.msg_thread = threading.Thread(target=self.wxbot.proc_msg)
+
+    def read_login_info(self, user_info):
+        self.music.read_login_info(user_info);
 
     def login(self, account, password):
         return self.music.login(account, password)
@@ -299,7 +305,7 @@ class NetEaseWrapper(threading.Thread):
         self.cond = threading.Condition()
         self.netease = NetEaseApi.NetEase()
         self.mic = mic
-        self.userId = 33120312
+        self.userId = ""
         self.volume = 0.7
         self.song = None  # 正在播放的曲目信息
         self.idx = -1  # 正在播放的曲目序号
@@ -347,6 +353,11 @@ class NetEaseWrapper(threading.Thread):
             playlist.append(music_info)
         return playlist
 
+    def read_login_info(self, user_info):
+        assert(os.path.exists(user_info))
+        with open (user_info) as f:
+            self.userId = f.readline()
+
     def login(self, username, password):  # 用户登陆
         password = hashlib.md5(password).hexdigest()
         login_info = self.netease.login(username, password)
@@ -354,7 +365,9 @@ class NetEaseWrapper(threading.Thread):
             res = True
             userId = login_info.get('profile').get('userId')
             self.userId = userId
-            file = open("./userInfo", 'w')
+            home_dir = os.path.expandvars('$HOME')
+            user_info = os.path.join(home_dir, 'userInfo')
+            file = open(user_info, 'w')
             file.write(str(userId))
             file.close()
         else:
