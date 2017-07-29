@@ -7,6 +7,7 @@ import time
 import subprocess
 import sys
 import os
+import re
 import random
 from MusicBoxApi import api as NetEaseApi
 
@@ -86,11 +87,17 @@ def handle(text, mic, profile, wxbot=None):
     if wxbot is not None:
         wxbot.music_mode = music_mode
 
-    if any(word in text for word in [u"歌单", u"我的"]):
-        music_mode.handleForever(1)  # 1: 用户歌单
+    pattern = re.compile(ur'(播放|我想听|来一首)([，]?)([\u4e00-\u9fa5]*)')
+    text_utf8 = text.decode('utf-8')
+    m = pattern.search(text_utf8)
+    song_name = m.group(3)
+    if song_name != '':
+        music_mode.handleForever(play_type=2, song_name=song_name)  # 2: 播放指定歌曲
+    elif any(word in text for word in [u"歌单", u"我的"]):
+        music_mode.handleForever(play_type=1)  # 1: 用户歌单
     else:
         # 默认播放推荐歌曲
-        music_mode.handleForever(0)  # 0: 推荐榜单
+        music_mode.handleForever(play_type=0)  # 0: 推荐榜单    
     logger.debug("Exiting music mode")
     return
 
@@ -103,8 +110,8 @@ def isValid(text):
         text -- user-input, typically transcribed speech
     """
     return any(word in text for word in [u"听歌", u"音乐", u"播放",
-                                         u"唱歌", u"唱首歌", u"歌单",
-                                         u"榜单"])
+                                         u"我想听", u"唱歌", u"唱首歌",
+                                         u"歌单", u"榜单"])
 
 
 # The interesting part
@@ -224,8 +231,14 @@ class MusicMode(object):
             self.mic.say(u"顺序播放")
             self.music.serialize()
             return
-        elif any(ext in command for ext in [u"播放", u"继续"]):
-            if u'即将播放' not in command:
+        elif any(ext in command for ext in [u"播放", u"继续", u"我想听", u"来一首"]):
+            pattern = re.compile(ur'(播放|我想听|来一首)([，]?)([\u4e00-\u9fa5]*)')
+            text_utf8 = command.decode('utf-8')
+            m = pattern.search(text_utf8)
+            song_name = m.group(3)
+            if song_name != '':
+                self.music.update_playlist_by_type(2, song_name)
+            elif u'即将播放' not in command:
                 self.music.play()
             return
         elif self.search_mode:
@@ -244,13 +257,15 @@ class MusicMode(object):
             return
         return
 
-    def handleForever(self, play_type=0):
+    def handleForever(self, play_type=0, song_name=''):
         """
         进入音乐播放
         play_type - 0：播放推荐榜单；1：播放用户歌单
         """
-
-        self.music.update_playlist_by_type(play_type)
+        if song_name != '':
+            self.music.update_playlist_by_type(2, song_name)
+        else:
+            self.music.update_playlist_by_type(play_type)
         self.music.start()
         if self.wxbot is not None:
             self.msg_thread.start()
