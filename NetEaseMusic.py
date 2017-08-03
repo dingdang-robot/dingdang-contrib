@@ -89,10 +89,11 @@ def handle(text, mic, profile, wxbot=None):
 
     pattern = re.compile(ur'(播放|我想听|来一首)([，]?)([\u4e00-\u9fa5]*)')
     text_utf8 = text.decode('utf-8')
-    m = pattern.search(text_utf8)
-    song_name = m.group(3)
-    if song_name != '':
-        music_mode.handleForever(play_type=2, song_name=song_name)  # 2: 播放指定歌曲
+    if pattern.match(text_utf8) and text != u'播放音乐':
+        m = pattern.search(text_utf8)
+        song_name = m.group(3)
+        if song_name != '':
+            music_mode.handleForever(play_type=2, song_name=song_name)  # 2: 播放指定歌曲
     elif any(word in text for word in [u"歌单", u"我的"]):
         music_mode.handleForever(play_type=1)  # 1: 用户歌单
     else:
@@ -232,7 +233,7 @@ class MusicMode(object):
             self.music.serialize()
             return
         elif any(ext in command for ext in [u"播放", u"继续", u"我想听", u"来一首"]):
-            pattern = re.compile(ur'(播放|我想听|来一首)([，]?)([\u4e00-\u9fa5]*)')
+            pattern = re.compile(ur'(播放|我想听|来一首)([，]?)([\u4e00-\u9fa5]+)')
             text_utf8 = command.decode('utf-8')
             m = pattern.search(text_utf8)
             song_name = m.group(3)

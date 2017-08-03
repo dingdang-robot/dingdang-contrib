@@ -17,7 +17,7 @@ pip install -r contrib/requirements.txt
 ``` sh
 cd /home/pi/.dingdang/contrib
 git pull
-pip install --upgrade -r contrib/requirements.txt
+pip install --upgrade -r requirements.txt
 ```
 
 ## 如何贡献
