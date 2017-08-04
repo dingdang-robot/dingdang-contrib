@@ -8,6 +8,8 @@
 import paho.mqtt.client as mqtt
 import paho.mqtt.publish as publish
 import logging
+import time
+import os
 import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -38,13 +40,18 @@ def handle(text,mic,profile,wxbot=None):
 		return
 
 def isValid(text):
-	f = open("/home/pi/action.txt")
-	lines = f.readlines()
-	words = []
-	for line in lines:
-		words.append(line.split()[0])
-	#words = [u"补光",u"浇水",u"土壤湿度",u"环境温度",u"环境湿度",u"光强",u"光照强度"] #this should be a words file
-	return any(word in text for word in words)
+        home_dir = os.path.expandvars('$HOME')
+        location = home_dir + '/action.txt'
+        words = []
+        if os.path.exists(location):
+            f = open(location)
+            lines = f.readlines()
+            if len(lines):
+                for line in lines:
+                    line = line.split()
+                    if len(line):
+                        words.append(line[0])
+        return any(word in text for word in words)
 
 class mqtt_contro(object):
 
@@ -64,10 +71,12 @@ class mqtt_contro(object):
 		#mqttc.on_log = on_log
 		if self.host and self.topic_p:
 			publish.single(self.topic_p, self.message, hostname=self.host)
-		if self.port and self.topic_s and self.host:
-			self.mqttc.connect(self.host, self.port, 60)
-			self.mqttc.subscribe(topic_s, 0)
-			self.mqttc.loop_forever()
+        	if self.port and self.topic_s and self.host:
+            		self.mqttc.connect(self.host, self.port, 5)
+            		self.mqttc.subscribe(topic_s, 0)
+			#while True:
+			#	self.mqttc.loop(timeout=5)
+			self.mqttc.loop_start()
 
 	def on_connect(self,mqttc, obj, flags, rc):
 		if rc == 0:
@@ -76,10 +85,16 @@ class mqtt_contro(object):
 			print("error connect")
 
 	def on_message(self,mqttc, obj, msg):
-    	#print(str(msg.payload))
-		if msg.payload:
-			self.mqttc.disconnect()
-			self.mic.say( str(msg.payload) )
+        	#print(str(msg.payload))
+        	if msg.payload:
+			self.mqttc.loop_stop()
+            		self.mqttc.disconnect()
+            		self.mic.say( str(msg.payload) )
+		else:
+			time.sleep(5)
+			self.mqttc.loop_stop()
+                        self.mqttc.disconnect()
+			self.mic.say("连接超时")
 
 	def on_publish(self,mqttc, obj, mid):
 		print("mid: " + str(mid))
