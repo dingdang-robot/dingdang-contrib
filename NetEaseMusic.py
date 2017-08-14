@@ -235,8 +235,10 @@ class MusicMode(object):
         elif any(ext in command for ext in [u"播放", u"继续", u"我想听", u"来一首"]):
             pattern = re.compile(ur'(播放|我想听|来一首)([，]?)([\u4e00-\u9fa5]+)')
             text_utf8 = command.decode('utf-8')
-            m = pattern.search(text_utf8)
-            song_name = m.group(3)
+            song_name = ''
+            if pattern.match(text_utf8): 
+                m = pattern.search(text_utf8)
+                song_name = m.group(3)
             if song_name != '':
                 self.music.update_playlist_by_type(2, song_name)
             elif u'即将播放' not in command:

@@ -1,14 +1,14 @@
 # -*- coding: utf-8 
 #author: chenzhuo
-#date:08/01 2017
 #Raspberry Pi or other platform can connect to the mqtt client,publisher and subscriber can access to bidirectional communication by switching their identities.
 #Example:you can get temperature of the enviroment collected by Arduino using Raspberry Pi when Raspberry Pi and Arduino communicate with each other.
-#The actions' file must be /home/pi/action.txt
+#The actions' file must be /home/pi/.dingdang/action.json
 
 import paho.mqtt.client as mqtt
 import paho.mqtt.publish as publish
 import logging
 import time
+import json
 import os
 import sys
 reload(sys)
@@ -17,20 +17,34 @@ sys.setdefaultencoding('utf8')
 WORDS = ["BUGUANG","JIAOSHUI"]
 SLUG = "mqttPub"
 
+def get_topic(text):
+	home_dir = os.path.expandvars('$HOME')
+	location = home_dir + '/.dingdang/action.json'
+	f = open(location).read()
+	fjson = json.loads(f)
+	topic = None
+	for key in fjson.keys():
+		if text in fjson[key]:
+			topic = key
+	return topic
+
 def handle(text,mic,profile,wxbot=None):
 	logger = logging.getLogger(__name__)
 
 	#get config
-	if ( SLUG not in profile ) or ( not profile[SLUG].has_key('host') ) or ( not profile[SLUG].has_key('port') ) or ( not profile[SLUG].has_key('topic_p') ) or ( not profile[SLUG].has_key('topic_s') ):
+	if ( SLUG not in profile ) or ( not profile[SLUG].has_key('host') ) or ( not profile[SLUG].has_key('port') ) or ( not profile[SLUG].has_key('topic_s') ):
 		mic.say("主人，配置有误")
 		return
 
 	host = profile[SLUG]['host']
 	port = profile[SLUG]['port']
 	topic_s = profile[SLUG]['topic_s']
-	topic_p = profile[SLUG]['topic_p']
+	#print topic_s
 	text = text.split("，")[0]   #百度语音识别返回的数据中有个中文，
-
+	topic_p = get_topic(text)
+	#print "topic_p is " + topic_p
+	if topic_p == None:
+		return
 	try:
 		mic.say("已经接收到指令")
 		mqtt_contro(host,port,topic_s,topic_p,text,mic)
@@ -41,17 +55,26 @@ def handle(text,mic,profile,wxbot=None):
 
 def isValid(text):
         home_dir = os.path.expandvars('$HOME')
-        location = home_dir + '/action.txt'
+        location = home_dir + '/.dingdang/action.json'
         words = []
         if os.path.exists(location):
-            f = open(location)
-            lines = f.readlines()
-            if len(lines):
-                for line in lines:
-                    line = line.split()
-                    if len(line):
-                        words.append(line[0])
-        return any(word in text for word in words)
+		f = open(location).read()
+		try:
+			fjson = json.loads(f)
+			for value in fjson.values():
+				if isinstance(value,list):
+					words += value
+				else:
+					words += []
+		except ValueError:
+			words += []
+            	#lines = f.readlines()
+		#if len(lines):
+		#	for line in lines:
+		#		line = line.split()
+		#		if len(line):
+		#			words.append(line[0])
+	return any(word in text for word in words)
 
 class mqtt_contro(object):
 
@@ -70,7 +93,7 @@ class mqtt_contro(object):
 		#mqttc.on_subscribe = on_subscribe
 		#mqttc.on_log = on_log
 		if self.host and self.topic_p:
-			publish.single(self.topic_p, self.message, hostname=self.host)
+			publish.single(self.topic_p, payload=self.message, hostname=self.host,port=1883)
         	if self.port and self.topic_s and self.host:
             		self.mqttc.connect(self.host, self.port, 5)
             		self.mqttc.subscribe(topic_s, 0)
