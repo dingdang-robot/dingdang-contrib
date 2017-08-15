@@ -9,6 +9,19 @@ sys.setdefaultencoding('utf8')
 WORDS = ["BEIWANG"]
 SLUG = "todo"
 
+def file_input(file_path):
+	global flist
+	global line_number
+	global last_line
+	f=open('%s' % file_path,'r')
+	flist=f.readlines()
+	n = 0
+	for fline in flist:
+		n += 1
+		line_number = n
+		last_line = fline
+	last_line = last_line.rstrip('\n')
+
 def handle(text, mic, profile, wxbot=None):
 	logger = logging.getLogger(__name__)
 	if SLUG not in profile or \
@@ -16,17 +29,10 @@ def handle(text, mic, profile, wxbot=None):
 		mic.say('备忘插件配置有误，插件使用失败')
 		return
 	file_path = profile[SLUG]['file_path']
+	if not os.path.isfile(file_path):
+		os.system('touch %s' % file_path)
+	os.system("sed -i '/^$/d' %s" % file_path)
 	try:
-		if not os.path.isfile(file_path):
-			os.system('touch %s' % file_path)
-		os.system("sed -i '/^$/d' %s" % file_path)
-		f=open('%s' % file_path,'r')
-		flist=f.readlines()
-		n = 0
-		for fline in flist:
-			n += 1
-			line_number = n
-			last_line = fline
 		if any(word in text for word in [u"增加", u"添加"]):
 			mic.say('请在滴一声后回复备忘内容')
 			input = mic.activeListen(MUSIC=True)
@@ -38,7 +44,7 @@ def handle(text, mic, profile, wxbot=None):
 				mic.say('好的，已添加备忘%s' % input)
 		elif any(word in text for word in [u"上", u"刚"]):
 			try:
-				last_line = last_line.rstrip('\n')
+				file_input(file_path)
 			except:
 				mic.say('您还没有备忘')
 				return
@@ -52,9 +58,9 @@ def handle(text, mic, profile, wxbot=None):
 					mic.say('已取消')
 			else:
 				mic.say('上一条备忘是：%s' % last_line)
-		elif any(word in text for word in [u"所有", u"全部"]):
+		else:
 			try:
-				last_line = last_line.rstrip('\n')
+				file_input(file_path)
 			except:
 				mic.say('您还没有备忘')
 				return
@@ -70,9 +76,6 @@ def handle(text, mic, profile, wxbot=None):
 				mic.say('您共有以下%d条备忘：' % line_number)
 				for fline in flist:
 					mic.say('%s' % fline)
-		else:
-			mic.say('请指定相关操作')
-			return
 	except Exception, e:
 		logger.error(e)
 		mic.say('抱歉，备忘插件出错')
