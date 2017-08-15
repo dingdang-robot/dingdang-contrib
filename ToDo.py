@@ -21,7 +21,7 @@ def file_input(file_path):
 		line_number = n
 		last_line = fline
 	last_line = last_line.rstrip('\n')
-	
+
 def handle(text, mic, profile, wxbot=None):
 	logger = logging.getLogger(__name__)
 	if SLUG not in profile or \
