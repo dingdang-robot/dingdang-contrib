@@ -57,12 +57,18 @@ def handle(text, mic, profile, wxbot=None):
     logger = logging.getLogger(__name__)
     # get config
     if SLUG not in profile or \
-       not profile[SLUG].has_key('key') or \
-       not profile[SLUG].has_key('location'):
+       'key' not in profile[SLUG] or \
+       (
+           'location' not in profile[SLUG] and
+           'location' not in profile
+       ):
         mic.say('天气插件配置有误，插件使用失败')
         return
     key = profile[SLUG]['key']
-    location = profile[SLUG]['location']
+    if 'location' in profile[SLUG]:
+        location = profile[SLUG]['location']
+    else:
+        location = profile['location']
     WEATHER_API = 'https://api.seniverse.com/v3/weather/daily.json'        
     SUGGESTION_API = 'https://api.seniverse.com/v3/life/suggestion.json'
     try:
