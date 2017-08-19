@@ -448,7 +448,7 @@ class NetEaseWrapper(threading.Thread):
                 self.cond.wait()
             try:
                 if report:
-                    self.mic.say(u"即将播放 %s %s" % (
+                    self.mic.say(u"即将播放：%s，%s" % (
                         song['artist'], song['song_name']))
                 time.sleep(.1)
                 subprocess.Popen("play -v %f %s" % (
