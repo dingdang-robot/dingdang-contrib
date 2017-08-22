@@ -18,7 +18,7 @@ def handle(text, mic, profile, wxbot=None):
         mic.say(u'请先在配置文件中开启微信接入功能')
         return
     sys.path.append(mic.dingdangpath.LIB_PATH)
-    dest_file = os.path.join(mic.dingdangpath.TEMP_PATH, 'wxqr.png')
+    dest_file = os.path.join(mic.dingdangpath.LOGIN_PATH, 'wxqr.png')
     wxbot.get_uuid()
     wxbot.gen_qr_code(dest_file)
     webport = "8080"
@@ -26,7 +26,7 @@ def handle(text, mic, profile, wxbot=None):
         if 'webport' in profile[SLUG]:
             webport = profile[SLUG]['webport']
     # start server
-    cmd = 'cd %s && python -m SimpleHTTPServer %s' % (mic.dingdangpath.TEMP_PATH, webport)
+    cmd = 'cd %s && python -m SimpleHTTPServer %s' % (mic.dingdangpath.LOGIN_PATH, webport)
     try:
         mic.say('正在启动服务器')
         subprocess.Popen(cmd, shell=True)
