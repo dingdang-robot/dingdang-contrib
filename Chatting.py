@@ -24,7 +24,7 @@ def handle(text, mic, profile, wxbot=None):
         wxbot -- wechat bot instance
     """
     logger = logging.getLogger(__name__)
-    if not any(word in text for word in [u"结束", u"停止", u"退出"]):
+    if not any(word in text for word in [u"结束", u"停止", u"退出", u"不聊了"]):
         mic.say(u"进入闲聊模式，现在跟我说说话吧")
         mic.chatting_mode = True
         mic.skip_passive = True
@@ -41,4 +41,4 @@ def isValid(text):
         Arguments:
         text -- user-input, typically transcribed speech
     """
-    return any(word in text for word in [u"闲聊", u"聊天"])
+    return any(word in text for word in [u"闲聊", u"聊天", u"不聊了"])
