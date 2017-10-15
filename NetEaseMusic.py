@@ -58,11 +58,14 @@ def handle(text, mic, profile, wxbot=None):
     # 登录网易云音乐
     account = ''
     password = ''
+    report = True
     if SLUG in profile:
         if 'account' in profile[SLUG]:
             account = profile[SLUG]['account']
         if 'password' in profile[SLUG]:
             password = profile[SLUG]['password']
+        if 'report' in profile[SLUG]:
+            report = profile[SLUG]['report']
     if account == '' or password == '':
         mic.say("请先配置好账户信息再找我播放音乐")
         return
@@ -72,7 +75,7 @@ def handle(text, mic, profile, wxbot=None):
     user_info = os.path.join(home_dir, 'userInfo')
     if not (os.path.exists(user_info)):
         mic.say("稍等，正在为您登录网易云音乐")
-        res = music_mode.login(account, password)
+        res = music_mode.login(account, password, report)
         if res:
             mic.say("登录成功")
             has_login = True
@@ -128,6 +131,7 @@ class MusicMode(object):
         self.wxbot = wxbot
         self.search_mode = False
         self.to_listen = True
+        self.to_report = True
         self.delegating = False
         if self.wxbot is not None:
             self.msg_thread = threading.Thread(target=self.wxbot.proc_msg)
@@ -135,7 +139,8 @@ class MusicMode(object):
     def read_login_info(self, user_info):
         self.music.read_login_info(user_info);
 
-    def login(self, account, password):
+    def login(self, account, password, report=True):
+        self.to_report = report
         return self.music.login(account, password)
 
     def delegateInput(self, input, call_by_wechat=False):
@@ -153,11 +158,11 @@ class MusicMode(object):
         if u"榜单" in command:
             self.mic.say(u"播放榜单音乐")
             self.music.update_playlist_by_type(0)
-            self.music.play()
+            self.music.play(self.to_report)
             return
         elif u"歌单" in command:
             self.music.update_playlist_by_type(1)
-            self.music.play()
+            self.music.play(self.to_report)
             return
         elif any(ext in command for ext in [u"停止聆听", u"关闭聆听", u"别听我的"]):
             if self.wxbot is None or not self.wxbot.is_login:
@@ -216,7 +221,7 @@ class MusicMode(object):
                     return
                 self.mic.say(u'正在为您搜索%s' % input)
                 self.music.update_playlist_by_type(2, input)
-                self.music.play()
+                self.music.play(self.to_report)
             return
         elif u'什么歌' in command:
             self.mic.say(u"正在播放的是%s的%s" % (
@@ -242,7 +247,7 @@ class MusicMode(object):
             if song_name != '':
                 self.music.update_playlist_by_type(2, song_name)
             elif u'即将播放' not in command:
-                self.music.play()
+                self.music.play(self.to_report)
             return
         elif self.search_mode:
             self.search_mode = False
@@ -253,7 +258,7 @@ class MusicMode(object):
                 return
             self.mic.say(u'正在为您搜索%s' % input)
             self.music.update_playlist_by_type(2, input)
-            self.music.play()
+            self.music.play(self.to_report)
         else:
             self.mic.say(u"没有听懂呢。要退出播放，请说退出播放")
             self.music.play(False)
