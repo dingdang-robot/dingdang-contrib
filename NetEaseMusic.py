@@ -58,7 +58,7 @@ def handle(text, mic, profile, wxbot=None):
     # 登录网易云音乐
     account = ''
     password = ''
-    report = True
+    report = False
     if SLUG in profile:
         if 'account' in profile[SLUG]:
             account = profile[SLUG]['account']
@@ -80,7 +80,7 @@ def handle(text, mic, profile, wxbot=None):
             mic.say("登录成功")
             has_login = True
     else:
-        music_mode.read_login_info(user_info)
+        music_mode.read_login_info(user_info, report)
         has_login = True
 
     if not has_login:
@@ -131,15 +131,16 @@ class MusicMode(object):
         self.wxbot = wxbot
         self.search_mode = False
         self.to_listen = True
-        self.to_report = True
+        self.to_report = False
         self.delegating = False
         if self.wxbot is not None:
             self.msg_thread = threading.Thread(target=self.wxbot.proc_msg)
 
-    def read_login_info(self, user_info):
+    def read_login_info(self, user_info, report=False):
+        self.to_report = report
         self.music.read_login_info(user_info);
 
-    def login(self, account, password, report=True):
+    def login(self, account, password, report=False):
         self.to_report = report
         return self.music.login(account, password)
 
@@ -432,7 +433,7 @@ class NetEaseWrapper(threading.Thread):
                 self.play()
                 self.pick_next()
 
-    def play(self, report=True):
+    def play(self, report=False):
         if self.is_pause:
             self.is_pause = False
         if self.idx < len(self.playlist):
