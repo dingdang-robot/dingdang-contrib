@@ -1,3 +1,6 @@
+# -*- coding: utf-8 
+# 有道翻译插件
+
 import urllib.request
 import urllib.parse
 import json
