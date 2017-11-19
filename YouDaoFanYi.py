@@ -54,7 +54,7 @@ def translate(self,key):
          s=str(youdaojson['translateResult'][0][0]['tgt'])
          return s
 
-                                                                                                                                             def getWords(text):
+                                                                                                                   def getWords(text):
      pattern1 = re.compile("翻译.*?")
      pattern2 = re.compile(".*?的翻译")
 
