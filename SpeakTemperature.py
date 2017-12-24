@@ -80,7 +80,7 @@ def handle(text, mic, profile, wxbot=None):
     logger = logging.getLogger(__name__)
     if SLUG not in profile or \
        'gpio' not in profile[SLUG]:
-        mic.say('DHT11配置有误，插件使用失败')
+        mic.say('DHT11配置有误，插件使用失败', cache=True)
         return
     if 'gpio' in profile[SLUG]:
         temp = profile[SLUG]['gpio']
@@ -93,7 +93,7 @@ def handle(text, mic, profile, wxbot=None):
     except Exception, e:
         print "配置异常"
         logger.error(e)
-        mic.say('抱歉，我没有获取到湿度')
+        mic.say('抱歉，我没有获取到湿度', cache=True)
 
 def isValid(text):
     return any(word in text for word in [u"室温", u"家中温度"])

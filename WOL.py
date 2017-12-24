@@ -49,17 +49,17 @@ def handle(text, mic, profile, wxbot=None):
 	if SLUG not in profile or \
 		not profile[SLUG].has_key('ip') or \
 		not profile[SLUG].has_key('mac'):
-			mic.say('WOL配置有误，插件使用失败')
+			mic.say('WOL配置有误，插件使用失败', cache=True)
 			return
 	ip = profile[SLUG]['ip']
 	mac = profile[SLUG]['mac']
 	try:
 		Waker(ip,mac)
 		if sent:
-			mic.say('启动成功')
+			mic.say('启动成功', cache=True)
 	except Exception, e:
 		logger.error(e)
-		mic.say('抱歉，启动失败')
+		mic.say('抱歉，启动失败', cache=True)
 
 
 def isValid(text):

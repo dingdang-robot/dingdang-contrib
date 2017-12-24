@@ -33,7 +33,7 @@ def handle(text,mic,profile,wxbot=None):
 
 	#get config
 	if ( SLUG not in profile ) or ( not profile[SLUG].has_key('host') ) or ( not profile[SLUG].has_key('port') ) or ( not profile[SLUG].has_key('topic_s') ):
-		mic.say("主人，配置有误")
+		mic.say("主人，配置有误", cache=True)
 		return
 
 	host = profile[SLUG]['host']
@@ -46,11 +46,11 @@ def handle(text,mic,profile,wxbot=None):
 	if topic_p == None:
 		return
 	try:
-		mic.say("已经接收到指令")
+		mic.say("已经接收到指令", cache=True)
 		mqtt_contro(host,port,topic_s,topic_p,text,mic)
 	except Exception, e:
 		logger.error(e)
-		mic.say("抱歉出了问题")
+		mic.say("抱歉出了问题", cache=True)
 		return
 
 def isValid(text):
@@ -117,7 +117,7 @@ class mqtt_contro(object):
 			time.sleep(5)
 			self.mqttc.loop_stop()
                         self.mqttc.disconnect()
-			self.mic.say("连接超时")
+			self.mic.say("连接超时", cache=True)
 
 	def on_publish(self,mqttc, obj, mid):
 		print("mid: " + str(mid))

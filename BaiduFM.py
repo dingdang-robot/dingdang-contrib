@@ -215,11 +215,11 @@ def handle(text, mic, profile, bot=None):
             input = mic.activeListen()
 
             if input and any(ext in input for ext in [u"结束", u"退出", u"停止"]):
-                mic.say(u"结束播放")
+                mic.say(u"结束播放", cache=True)
                 music_player.stop()
                 return
             else:
-                mic.say(u"什么？")
+                mic.say(u"什么？", cache=True)
                 music_player.resume()
 
 

@@ -73,11 +73,11 @@ def handle(text, mic, profile, wxbot=None):
     s=translate(words)
     if words:
         if s:
-            mic.say(words+"的翻译是" + s)
+            mic.say(words+"的翻译是" + s, cache=True)
         else:
-            mic.say("翻译" + words +"有误 请重试")
+            mic.say("翻译" + words +"有误 请重试", cache=True)
     else:
-        mic.say(u"没有听清楚 请重试")
+        mic.say(u"没有听清楚 请重试", cache=True)
 
                                                                                                                                                             
 def isValid(text):

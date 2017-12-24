@@ -59,14 +59,14 @@ def handle(text, mic, profile, wxbot=None):
         if html:
             str = handleHtml(html)
             if str:
-                mic.say(words + str)
+                mic.say(words + str, cache=True)
             else:
-                mic.say("成语" + words +"有误 请重试")
+                mic.say("成语" + words +"有误 请重试", cache=True)
 
         else:
-            mic.say(u"网络连接有误 请重试")
+            mic.say(u"网络连接有误 请重试", cache=True)
     else:
-        mic.say(u"没有听清楚 请重试")
+        mic.say(u"没有听清楚 请重试", cache=True)
 
 def isValid(text):
     return u"成语" in text

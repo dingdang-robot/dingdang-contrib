@@ -23,18 +23,18 @@ def handle(text, mic, profile, wxbot=None):
     if SLUG not in profile or \
                     'get_cookie' not in profile[SLUG] or \
                     'send_cookie' not in profile[SLUG]:
-        mic.say('小冰配置错误，暂无法使用')
+        mic.say('小冰配置错误，暂无法使用', cache=True)
         return
     get_cookie = profile[SLUG]['get_cookie']
     send_cookie = profile[SLUG]['send_cookie']
 
 
     if any(word in text for word in [u"召唤女神", u"找女神聊天"]):
-        mic.say(u"我是人见人爱的小冰，快来和我聊聊天吧")
+        mic.say(u"我是人见人爱的小冰，快来和我聊聊天吧", cache=True)
         mic.chatting_mode = True
         mic.skip_passive = True
     elif any(word in text for word in [u"不要女神了", u"再见女神"]):
-        mic.say(u"轻轻的我走了，正如我轻轻地来。我们下次再聊吧")
+        mic.say(u"轻轻的我走了，正如我轻轻地来。我们下次再聊吧", cache=True)
         mic.skip_passive = False
         mic.chatting_mode = False
     else:
@@ -43,7 +43,7 @@ def handle(text, mic, profile, wxbot=None):
         xiaoice.send_message(message)
         txt = xiaoice.get_message()
         if txt:
-            mic.say(txt)
+            mic.say(txt, cache=True)
 
 def isValid(text):
     """

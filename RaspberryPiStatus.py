@@ -18,7 +18,7 @@ def getCPUtemperature(logger, mic):
         result = float(res) / 1000
     except:
         logger.error(e)
-        mic.say(u'抱歉，无法获取处理器温度')
+        mic.say(u'抱歉，无法获取处理器温度', cache=True)
     return result
 
 def getRAMinfo():
@@ -62,7 +62,7 @@ def handle(text, mic, profile, wxbot=None):
         mic.say(u'处理器温度' + str(status['cpu_tmp']) + u'度,内存使用百分之' + str(status['ram_percentage']) + u',存储使用百分之' + str(status['disk_percentage']))
     except Exception, e:
         logger.error(e)
-        mic.say(u'抱歉，我没有获取到树莓派状态')
+        mic.say(u'抱歉，我没有获取到树莓派状态', cache=True)
 
 def isValid(text):
     return any(word in text for word in [u"树莓派状态", u"状态", u"运行状态"])

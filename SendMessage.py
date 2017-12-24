@@ -21,13 +21,13 @@ def handle(text, mic, profile, wxbot=None):
         pattern = re.compile(PATTERN)
         m = pattern.search(text_utf8)
         if not m or m.lastindex < 3:
-            mic.say('抱歉，没能识别联系人，请重试')
+            mic.say('抱歉，没能识别联系人，请重试', cache=True)
             return;
         username = m.group(2)
-        mic.say('好嘞，开始给%s送信' % (username))
+        mic.say('好嘞，开始给%s送信' % (username), cache=True)
         time.sleep(.3)
         if m.lastindex < 6:
-            mic.say('抱歉，没有听清楚消息内容')
+            mic.say('抱歉，没有听清楚消息内容', cache=True)
             return;
         msgbody = m.group(6)
         comfirm_input = u'确认'
@@ -40,12 +40,12 @@ def handle(text, mic, profile, wxbot=None):
             comfirm_input = mic.activeListen(MUSIC=True)
         if comfirm_input is not None and any(word in comfirm_input for word in [u"确认", u"好", u"是", u"OK"]):
             wxbot.send_msg(username, msgbody, False)
-            mic.say('提交成功，消息内容：%s' % (msgbody))
+            mic.say('提交成功，消息内容：%s' % (msgbody), cache=True)
             return
-        mic.say('确认失败，操作已取消，请重新尝试')
+        mic.say('确认失败，操作已取消，请重新尝试', cache=True)
     except Exception, e:
         logger.error(e)
-        mic.say('抱歉，消息没有提交成功')
+        mic.say('抱歉，消息没有提交成功', cache=True)
 
 def isValid(text):
     return any(word in text for word in [u"发信", u"发送", u"发消息"])

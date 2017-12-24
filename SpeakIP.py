@@ -44,17 +44,17 @@ def handle(text, mic, profile, wxbot=None):
             ip = getLocalIP()
             logger.debug('getLocalIP: ', ip)
             if ip == False:
-                mic.say('正在获取中')
+                mic.say('正在获取中', cache=True)
             else:
                 count += 1
                 ip += '完毕'
-                mic.say(ip)
+                mic.say(ip, cache=True)
             if count == 1:
                 break
             time.sleep(1)
     except Exception, e:
         logger.error(e)
-        mic.say('抱歉，我没有获取到地址')
+        mic.say('抱歉，我没有获取到地址', cache=True)
 
 def isValid(text):
     return any(word in text for word in [u"IP", u"网络地址"])

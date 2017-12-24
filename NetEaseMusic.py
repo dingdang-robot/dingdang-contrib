@@ -39,7 +39,7 @@ def handle(text, mic, profile, wxbot=None):
         netease_wrapper = NetEaseWrapper(**kwargs)
     except:
         logger.error("Couldn't connect to NetEase server", exc_info=True)
-        mic.say(u"访问网易云音乐失败了，请稍后再试")
+        mic.say(u"访问网易云音乐失败了，请稍后再试", cache=True)
         return
 
     persona = 'DINGDANG'
@@ -67,24 +67,24 @@ def handle(text, mic, profile, wxbot=None):
         if 'report' in profile[SLUG]:
             report = profile[SLUG]['report']
     if account == '' or password == '':
-        mic.say("请先配置好账户信息再找我播放音乐")
+        mic.say("请先配置好账户信息再找我播放音乐", cache=True)
         return
 
     has_login = False
     home_dir = os.path.expandvars('$HOME')
     user_info = os.path.join(home_dir, 'userInfo')
     if not (os.path.exists(user_info)):
-        mic.say("稍等，正在为您登录网易云音乐")
+        mic.say("稍等，正在为您登录网易云音乐", cache=True)
         res = music_mode.login(account, password, report)
         if res:
-            mic.say("登录成功")
+            mic.say("登录成功", cache=True)
             has_login = True
     else:
         music_mode.read_login_info(user_info, report)
         has_login = True
 
     if not has_login:
-        mic.say("登录失败, 退出播放. 请检查配置, 稍后再试")
+        mic.say("登录失败, 退出播放. 请检查配置, 稍后再试", cache=True)
         return
 
     if wxbot is not None:
@@ -157,7 +157,7 @@ class MusicMode(object):
 
         # check if input is meant to start the music module
         if u"榜单" in command:
-            self.mic.say(u"播放榜单音乐")
+            self.mic.say(u"播放榜单音乐", cache=True)
             self.music.update_playlist_by_type(0)
             self.music.play(self.to_report)
             return
@@ -167,33 +167,33 @@ class MusicMode(object):
             return
         elif any(ext in command for ext in [u"停止聆听", u"关闭聆听", u"别听我的"]):
             if self.wxbot is None or not self.wxbot.is_login:
-                self.mic.say(u"您还未登录微信，不能关闭语音交互功能")
+                self.mic.say(u"您还未登录微信，不能关闭语音交互功能", cache=True)
                 return
-            self.mic.say(u"关闭语音交互功能")
+            self.mic.say(u"关闭语音交互功能", cache=True)
             self.to_listen = False
             self.music.play(False)
             return
         elif any(ext in command for ext in [u"恢复聆听", u"开始聆听", u"开启聆听", u"听我的"]):
-            self.mic.say(u"开启语音交互功能")
+            self.mic.say(u"开启语音交互功能", cache=True)
             self.to_listen = True
             self.music.play(False)
             return
         elif u"暂停" in command:
-            self.mic.say(u"暂停播放")
+            self.mic.say(u"暂停播放", cache=True)
             self.music.pause()
             return
         elif any(ext in command for ext in [u"结束", u"退出", u"停止"]):
             self.music.exit()
-            self.mic.say(u"结束播放")
+            self.mic.say(u"结束播放", cache=True)
             if self.wxbot is not None:
                 self.wxbot.music_mode = None
             return
         elif any(ext in command for ext in [u"大声", u"大声点", u"大点声"]):
-            self.mic.say(u"大点声")
+            self.mic.say(u"大点声", cache=True)
             self.music.increase_volume()
             return
         elif any(ext in command for ext in [u"小声", u"小点声", u"小声点"]):
-            self.mic.say(u"小点声")
+            self.mic.say(u"小点声", cache=True)
             self.music.decrease_volume()
             return
         elif any(
@@ -201,23 +201,23 @@ class MusicMode(object):
                                             u'下一首', u"下首歌", u"切歌",
                                             u"下一首歌", u"换首歌", u"切割",
                                             u"那首歌"]):
-            self.mic.say(u"下一首歌")
+            self.mic.say(u"下一首歌", cache=True)
             self.music.next()
             return
         elif any(ext in command for ext in [u'上一首', u'上一首歌', u'上首歌']):
-            self.mic.say(u"上一首歌")
+            self.mic.say(u"上一首歌", cache=True)
             self.music.previous()
             return
         elif any(ext in command for ext in [u'搜索', u'查找']):
             if call_by_wechat:
                 self.search_mode = True
-                self.mic.say(u"请直接回复要搜索的关键词")
+                self.mic.say(u"请直接回复要搜索的关键词", cache=True)
                 return
             else:
-                self.mic.say(u"请在滴一声后告诉我您要搜索的关键词")
+                self.mic.say(u"请在滴一声后告诉我您要搜索的关键词", cache=True)
                 input = self.mic.activeListen(MUSIC=True)
                 if input is None or input.strip() == '':
-                    self.mic.say("没有听到关键词呢，请重新叫我查找吧")
+                    self.mic.say("没有听到关键词呢，请重新叫我查找吧", cache=True)
                     self.music.play(False)
                     return
                 self.mic.say(u'正在为您搜索%s' % input)
@@ -231,11 +231,11 @@ class MusicMode(object):
             self.music.play(False)
             return
         elif u'随机' in command:
-            self.mic.say(u"随机播放")
+            self.mic.say(u"随机播放", cache=True)
             self.music.randomize()
             return
         elif u'顺序' in command:
-            self.mic.say(u"顺序播放")
+            self.mic.say(u"顺序播放", cache=True)
             self.music.serialize()
             return
         elif any(ext in command for ext in [u"播放", u"继续", u"我想听", u"来一首"]):
@@ -254,14 +254,14 @@ class MusicMode(object):
             self.search_mode = False
             input = command
             if input is None or input.strip() == '':
-                self.mic.say("没有听到关键词呢，请重新叫我查找吧")
+                self.mic.say("没有听到关键词呢，请重新叫我查找吧", cache=True)
                 self.music.play(False)
                 return
             self.mic.say(u'正在为您搜索%s' % input)
             self.music.update_playlist_by_type(2, input)
             self.music.play(self.to_report)
         else:
-            self.mic.say(u"没有听懂呢。要退出播放，请说退出播放")
+            self.mic.say(u"没有听懂呢。要退出播放，请说退出播放", cache=True)
             self.music.play(False)
             return
         return
@@ -308,7 +308,7 @@ class MusicMode(object):
 
             if input:
                 if any(ext in input for ext in [u"结束", u"退出", u"停止"]):
-                    self.mic.say(u"结束播放")
+                    self.mic.say(u"结束播放", cache=True)
                     self.music.stop()
                     self.music.exit()
                     return
@@ -317,7 +317,7 @@ class MusicMode(object):
                     self.delegateInput(input)
                     self.delegating = False
             else:
-                self.mic.say(u"什么？")
+                self.mic.say(u"什么？", cache=True)
                 if not self.music.is_pause:
                     self.music.play(False)
 
@@ -352,10 +352,10 @@ class NetEaseWrapper(threading.Thread):
                 self.playlist = self.get_song_list_by_playlist_id(
                     user_playlist[0]['id'])
                 if len(self.playlist) == 0:
-                    self.mic.say("用户歌单没有歌曲，改为播放推荐榜单")
+                    self.mic.say("用户歌单没有歌曲，改为播放推荐榜单", cache=True)
                     self.playlist = self.get_top_songlist()
             else:
-                self.mic.say("当前用户没有歌单，改为播放推荐榜单")
+                self.mic.say("当前用户没有歌单，改为播放推荐榜单", cache=True)
                 self.playlist = self.get_top_songlist()
         elif play_type == 2:
             # 搜索歌曲

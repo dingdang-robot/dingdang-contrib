@@ -15,7 +15,7 @@ SLUG = "webserver"
 def handle(text, mic, profile, wxbot=None):
     logger = logging.getLogger(__name__)
     if 'wechat' not in profile or not profile['wechat'] or wxbot is None:
-        mic.say(u'请先在配置文件中开启微信接入功能')
+        mic.say(u'请先在配置文件中开启微信接入功能', cache=True)
         return
     sys.path.append(mic.dingdangpath.LIB_PATH)
     dest_file = os.path.join(mic.dingdangpath.LOGIN_PATH, 'wxqr.png')
@@ -28,14 +28,14 @@ def handle(text, mic, profile, wxbot=None):
     # start server
     cmd = 'cd %s && python -m SimpleHTTPServer %s' % (mic.dingdangpath.LOGIN_PATH, webport)
     try:
-        mic.say('正在启动服务器')
+        mic.say('正在启动服务器', cache=True)
         subprocess.Popen(cmd, shell=True)
         time.sleep(3)
         success = u'后台服务器启动成功，服务端口：%s' % (webport)
-        mic.say(success)
+        mic.say(success, cache=True)
     except Exception, e:
         logger.error(e)
-        mic.say('抱歉，后台服务器启动失败')
+        mic.say('抱歉，后台服务器启动失败', cache=True)
 
 def isValid(text):
     return any(word in text for word in [u"浏览", u"服务器"])

@@ -62,7 +62,7 @@ def handle(text, mic, profile, wxbot=None):
            'location' not in profile[SLUG] and
            'location' not in profile
        ):
-        mic.say('天气插件配置有误，插件使用失败')
+        mic.say('天气插件配置有误，插件使用失败', cache=True)
         return
     key = profile[SLUG]['key']
     if 'location' in profile[SLUG]:
@@ -93,12 +93,12 @@ def handle(text, mic, profile, wxbot=None):
                         suggestion_text = suggestion['results'][0]['suggestion']['sport']['brief']
                         analyze_res = analyze_today(daily[day]['code_day'], suggestion_text)
             responds += analyze_res
-            mic.say(responds)
+            mic.say(responds, cache=True)
         else:
-            mic.say('抱歉，我获取不到天气数据，请稍后再试')
+            mic.say('抱歉，我获取不到天气数据，请稍后再试', cache=True)
     except Exception, e:
         logger.error(e)
-        mic.say('抱歉，我获取不到天气数据，请稍后再试')
+        mic.say('抱歉，我获取不到天气数据，请稍后再试', cache=True)
         
     
 def isValid(text):
