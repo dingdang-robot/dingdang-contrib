@@ -10,6 +10,7 @@ import os
 import re
 import random
 from MusicBoxApi import api as NetEaseApi
+import eyed3
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -17,6 +18,7 @@ sys.setdefaultencoding('utf8')
 # Standard module stuff
 WORDS = ["YINYUE"]
 SLUG = "netease_music"
+
 
 def handle(text, mic, profile, wxbot=None):
     """
@@ -33,11 +35,13 @@ def handle(text, mic, profile, wxbot=None):
 
     kwargs = {}
     kwargs['mic'] = mic
+    kwargs['profile'] = profile
 
     logger.debug("Preparing to start netease music module")
     try:
         netease_wrapper = NetEaseWrapper(**kwargs)
-    except:
+    except Exception, e:
+        logger.debug(e)
         logger.error("Couldn't connect to NetEase server", exc_info=True)
         mic.say(u"访问网易云音乐失败了，请稍后再试", cache=True)
         return
@@ -59,6 +63,7 @@ def handle(text, mic, profile, wxbot=None):
     account = ''
     password = ''
     report = False
+    local_default = False
     if SLUG in profile:
         if 'account' in profile[SLUG]:
             account = profile[SLUG]['account']
@@ -66,6 +71,8 @@ def handle(text, mic, profile, wxbot=None):
             password = profile[SLUG]['password']
         if 'report' in profile[SLUG]:
             report = profile[SLUG]['report']
+        if 'local_default' in profile[SLUG]:
+            local_default = profile[SLUG]['local_default']
     if account == '' or password == '':
         mic.say("请先配置好账户信息再找我播放音乐", cache=True)
         return
@@ -90,18 +97,22 @@ def handle(text, mic, profile, wxbot=None):
     if wxbot is not None:
         wxbot.music_mode = music_mode
 
-    pattern = re.compile(ur'(播放|我想听|来一首)([，]?)([\u4e00-\u9fa5]*)')
+    pattern = re.compile(ur'(我想听|来一首)([，]?)([\u4e00-\u9fa5]*)')
     text_utf8 = text.decode('utf-8')
     if pattern.match(text_utf8) and text != u'播放音乐':
         m = pattern.search(text_utf8)
         song_name = m.group(3)
         if song_name != '':
-            music_mode.handleForever(play_type=2, song_name=song_name)  # 2: 播放指定歌曲
+            music_mode.handleForever(
+                play_type=2, song_name=song_name)  # 2: 播放指定歌曲
     elif any(word in text for word in [u"歌单", u"我的"]):
         music_mode.handleForever(play_type=1)  # 1: 用户歌单
     else:
-        # 默认播放推荐歌曲
-        music_mode.handleForever(play_type=0)  # 0: 推荐榜单    
+        # 默认播放本地音乐
+        if local_default:
+            music_mode.handleForever(play_type=3)  # 3: 本地音乐
+        else:
+            music_mode.handleForever(play_type=0)  # 0: 推荐榜单
     logger.debug("Exiting music mode")
     return
 
@@ -138,7 +149,7 @@ class MusicMode(object):
 
     def read_login_info(self, user_info, report=False):
         self.to_report = report
-        self.music.read_login_info(user_info);
+        self.music.read_login_info(user_info)
 
     def login(self, account, password, report=False):
         self.to_report = report
@@ -147,7 +158,7 @@ class MusicMode(object):
     def delegateInput(self, input, call_by_wechat=False):
 
         command = input.upper()
-        if command.startswith(self.robot_name_cn+": "):
+        if command.startswith(self.robot_name_cn + ": "):
             return
 
         if call_by_wechat:
@@ -173,7 +184,8 @@ class MusicMode(object):
             self.to_listen = False
             self.music.play(False)
             return
-        elif any(ext in command for ext in [u"恢复聆听", u"开始聆听", u"开启聆听", u"听我的"]):
+        elif any(ext in command for ext in [
+                u"恢复聆听", u"开始聆听", u"开启聆听", u"听我的"]):
             self.mic.say(u"开启语音交互功能", cache=True)
             self.to_listen = True
             self.music.play(False)
@@ -197,10 +209,10 @@ class MusicMode(object):
             self.music.decrease_volume()
             return
         elif any(
-                 ext in command for ext in [
-                                            u'下一首', u"下首歌", u"切歌",
-                                            u"下一首歌", u"换首歌", u"切割",
-                                            u"那首歌"]):
+            ext in command for ext in [
+                u'下一首', u"下首歌", u"切歌",
+                u"下一首歌", u"换首歌", u"切割",
+                u"那首歌"]):
             self.mic.say(u"下一首歌", cache=True)
             self.music.next()
             return
@@ -242,7 +254,7 @@ class MusicMode(object):
             pattern = re.compile(ur'(播放|我想听|来一首)([，]?)([\u4e00-\u9fa5]+)')
             text_utf8 = command.decode('utf-8')
             song_name = ''
-            if pattern.match(text_utf8): 
+            if pattern.match(text_utf8):
                 m = pattern.search(text_utf8)
                 song_name = m.group(3)
             if song_name != '':
@@ -324,11 +336,12 @@ class MusicMode(object):
 
 class NetEaseWrapper(threading.Thread):
 
-    def __init__(self, mic):
+    def __init__(self, mic, profile):
         super(NetEaseWrapper, self).__init__()
         self.cond = threading.Condition()
         self.netease = NetEaseApi.NetEase()
         self.mic = mic
+        self.profile = profile
         self.userId = ""
         self.volume = 0.7
         self.song = None  # 正在播放的曲目信息
@@ -360,6 +373,37 @@ class NetEaseWrapper(threading.Thread):
         elif play_type == 2:
             # 搜索歌曲
             self.playlist = self.search_by_name(keyword)
+        elif play_type == 3:
+            self.playlist = self.get_local_songlist()
+
+    def get_local_songlist(self):  # 本地音乐
+        local_path = ''
+        if 'local_path' in self.profile[SLUG]:
+            local_path = self.profile[SLUG]['local_path']
+
+        playlist = []
+        for (dirpath, dirnames, filenames) in os.walk(local_path):
+            # f.extend(filenames)
+            for filename in filenames:
+                # only mp3 accept
+                if os.path.splitext(filename)[1] != ".mp3":
+                    continue
+                # read mp3 properties and add to the playlist
+                mp3_path = dirpath + filename
+                audiofile = eyed3.load(mp3_path)
+                music_info = {}
+                music_info.setdefault("song_id", audiofile.tag.track_num[0])
+                music_info.setdefault("song_name", audiofile.tag.title)
+                music_info.setdefault("artist", audiofile.tag.artist)
+                music_info.setdefault("album_name", audiofile.tag.album)
+                music_info.setdefault("mp3_url", "'{}'".format(mp3_path))
+                music_info.setdefault("playTime", int(
+                    audiofile.info.time_secs) * 1000)
+                music_info.setdefault("quality", "")
+                playlist.append(music_info)
+            break
+
+        return playlist
 
     def get_top_songlist(self):  # 热门单曲
         music_list = self.netease.top_songlist()
@@ -379,7 +423,7 @@ class NetEaseWrapper(threading.Thread):
 
     def read_login_info(self, user_info):
         assert(os.path.exists(user_info))
-        with open (user_info) as f:
+        with open(user_info) as f:
             self.userId = f.readline()
 
     def login(self, username, password):  # 用户登陆
@@ -447,7 +491,6 @@ class NetEaseWrapper(threading.Thread):
             subprocess.Popen("pkill play", shell=True)
             song['mp3_url'] = self.netease.songs_detail_new_api(
                 [song['song_id']])[0]['url']
-                #song['mp3_url'] = 'http://music.163.com/song/media/outer/url?id=' + song['song_id'] + '.mp3'
             mp3_url = song['mp3_url']
             if mp3_url is None:
                 self.next()
@@ -461,14 +504,14 @@ class NetEaseWrapper(threading.Thread):
                     self.volume, mp3_url), shell=True, stdout=subprocess.PIPE)
                 self.cond.notify()
                 self.cond.wait(int(song.get('playTime')) / 1000)
-            except:
+            except Exception:
                 pass
         else:
             try:
                 subprocess.Popen("pkill play", shell=True)
                 self.cond.notify()
                 self.cond.wait()
-            except:
+            except Exception:
                 pass
 
     def notify(self):
@@ -516,7 +559,7 @@ class NetEaseWrapper(threading.Thread):
             self.cond.notifyAll()
             self.cond.release()
             self.cond.wait()
-        except:
+        except Exception:
             pass
 
     def pause(self):
