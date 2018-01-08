@@ -445,9 +445,9 @@ class NetEaseWrapper(threading.Thread):
                 song = random.choice(self.playlist)
             self.song = song
             subprocess.Popen("pkill play", shell=True)
-            if report:
-                song['mp3_url'] = self.netease.songs_detail_new_api(
-                    [song['song_id']])[0]['url']
+            song['mp3_url'] = self.netease.songs_detail_new_api(
+                [song['song_id']])[0]['url']
+                #song['mp3_url'] = 'http://music.163.com/song/media/outer/url?id=' + song['song_id'] + '.mp3'
             mp3_url = song['mp3_url']
             if mp3_url is None:
                 self.next()
