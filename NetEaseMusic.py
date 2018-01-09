@@ -11,6 +11,7 @@ import re
 import random
 from MusicBoxApi import api as NetEaseApi
 import eyed3
+from random import shuffle
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -338,6 +339,7 @@ class NetEaseWrapper(threading.Thread):
 
     def __init__(self, mic, profile):
         super(NetEaseWrapper, self).__init__()
+        self.logger = logging.getLogger(__name__)
         self.cond = threading.Condition()
         self.netease = NetEaseApi.NetEase()
         self.mic = mic
@@ -385,24 +387,38 @@ class NetEaseWrapper(threading.Thread):
         for (dirpath, dirnames, filenames) in os.walk(local_path):
             # f.extend(filenames)
             for filename in filenames:
-                # only mp3 accept
-                if os.path.splitext(filename)[1] != ".mp3":
-                    continue
-                # read mp3 properties and add to the playlist
-                mp3_path = dirpath + filename
-                audiofile = eyed3.load(mp3_path)
-                music_info = {}
-                music_info.setdefault("song_id", audiofile.tag.track_num[0])
-                music_info.setdefault("song_name", audiofile.tag.title)
-                music_info.setdefault("artist", audiofile.tag.artist)
-                music_info.setdefault("album_name", audiofile.tag.album)
-                music_info.setdefault("mp3_url", "'{}'".format(mp3_path))
-                music_info.setdefault("playTime", int(
-                    audiofile.info.time_secs) * 1000)
-                music_info.setdefault("quality", "")
-                playlist.append(music_info)
+                try:
+                    # only mp3 accept
+                    if os.path.splitext(filename)[1] != ".mp3":
+                        continue
+                    # read mp3 properties and add to the playlist
+                    mp3_path = dirpath + filename
+                    audiofile = eyed3.load(mp3_path)
+                    music_info = {}
+                    if audiofile.tag:
+                        if audiofile.tag.title:
+                            music_info.setdefault(
+                                "song_name", audiofile.tag.title)
+                        music_info.setdefault("artist", audiofile.tag.artist)
+                    else:
+                        music_info.setdefault(
+                            "song_name", os.path.splitext(filename)[0])
+                        music_info.setdefault("artist", "")
+                    music_info.setdefault("song_id", "0")
+                    music_info.setdefault("album_name", "")
+                    music_info.setdefault("mp3_url", "'{}'".format(mp3_path))
+                    music_info.setdefault("playTime", int(
+                        audiofile.info.time_secs) * 1000)
+                    music_info.setdefault("quality", "")
+                    playlist.append(music_info)
+                except Exception, e:
+                    self.logger.error(e)
+                    pass
             break
-
+        # 随机本地音乐列表顺序
+        if 'local_shuffle' in self.profile[SLUG]:
+            if self.profile[SLUG]['local_shuffle']:
+                shuffle(playlist)
         return playlist
 
     def get_top_songlist(self):  # 热门单曲
