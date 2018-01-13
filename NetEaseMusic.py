@@ -177,6 +177,10 @@ class MusicMode(object):
             self.music.update_playlist_by_type(1)
             self.music.play(self.to_report)
             return
+        elif any(ext in command for ext in [u"本地", u"本机"]):
+            self.music.update_playlist_by_type(3)
+            self.music.play(self.to_report)
+            return
         elif any(ext in command for ext in [u"停止聆听", u"关闭聆听", u"别听我的"]):
             if self.wxbot is None or not self.wxbot.is_login:
                 self.mic.say(u"您还未登录微信，不能关闭语音交互功能", cache=True)
@@ -505,8 +509,11 @@ class NetEaseWrapper(threading.Thread):
                 song = random.choice(self.playlist)
             self.song = song
             subprocess.Popen("pkill play", shell=True)
-            song['mp3_url'] = self.netease.songs_detail_new_api(
-                [song['song_id']])[0]['url']
+            # if song['mp3_url'] contains 'http://',
+            # means music from internet, not local
+            if "http://" in song['mp3_url']:
+                song['mp3_url'] = self.netease.songs_detail_new_api(
+                    [song['song_id']])[0]['url']
             mp3_url = song['mp3_url']
             if mp3_url is None:
                 self.next()
