@@ -74,7 +74,7 @@ def handle(text, mic, profile, wxbot=None):
             mic.say(list_50_name[i])
         mic.say(u'您对第几条感兴趣？', cache=True)
         interest = mic.activeListen(MUSIC=True)
-        if len(interest) == 0:
+        if not interest or len(interest) == 0:
             mic.say(u'没有收到指令，已结束', cache=True)
             return
         else:
