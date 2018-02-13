@@ -12,7 +12,7 @@ WORDS = ["CHONGQI"]
 SLUG = "reboot"
 
 def handle(text, mic, profile, wxbot=None):
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__halt__)
     try:
         mic.say('将要重新启动系统，请在滴一声后进行确认，授权相关操作', cache=True)
         input = mic.activeListen(MUSIC=True)
