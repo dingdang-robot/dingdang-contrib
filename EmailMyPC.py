@@ -70,4 +70,4 @@ def handle(text, mic, profile, wxbot=None):
 		mic.say('抱歉，指令发送失败', cache=True)
 
 def isValid(text):
-	return any(word in text for word in [u"关机", u"关电脑", u"关闭电脑", u"屏幕", u"截图", u"摄像头", u"快捷键", u"命令", u"指令"])
+	return any(word in text for word in [u"关电脑", u"关闭电脑", u"屏幕", u"截图", u"摄像头", u"快捷键", u"命令", u"指令"])
