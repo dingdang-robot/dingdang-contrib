@@ -15,6 +15,8 @@ import eyed3
 reload(sys)
 sys.setdefaultencoding('utf8')
 
+#import cProfile, pstats, StringIO
+
 # Standard module stuff
 WORDS = ["YINYUE"]
 SLUG = "netease_music"
@@ -489,8 +491,16 @@ class NetEaseWrapper(threading.Thread):
                 song = random.choice(self.playlist)
             self.song = song
             subprocess.Popen("pkill play", shell=True)
+            # pr = cProfile.Profile()
+            # pr.enable()
             song['mp3_url'] = self.netease.songs_detail_new_api(
                 [song['song_id']])[0]['url']
+            # pr.disable()
+            # s = StringIO.StringIO()
+            # sortby = 'cumulative'
+            # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+            # ps.print_stats()
+            # print s.getvalue()
             mp3_url = song['mp3_url']
             if mp3_url is None:
                 self.next()
